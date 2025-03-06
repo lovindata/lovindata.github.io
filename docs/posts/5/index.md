@@ -22,7 +22,7 @@ What are Ubuntu Server, Docker, Portainer, Traefik, and CrowdSec? Quickly:
 - [**🐧 Ubuntu Server**](https://ubuntu.com/download/server): Ubuntu Server is a robust and popular [Linux-based operating system](https://www.linux.org/) designed for server environments, providing the foundation for building reliable and secure web applications and services.
 - [**🐳 Docker**](https://www.docker.com/): Docker is a platform that allows developers to automate the deployment of applications inside lightweight, portable [containers](https://www.docker.com/resources/what-container/), simplifying environment management and ensuring consistency across different systems.
 - [**🛠️ Portainer**](https://www.portainer.io/): Portainer is a simple and easy-to-use management interface for Docker, providing a graphical dashboard for managing containers, [images](https://hub.docker.com/search), and [volumes](https://docs.docker.com/engine/storage/volumes/), which helps streamline container operations for developers.
-- [**🔄 Traefik**](https://traefik.io/traefik/): Traefik is a modern and powerful [reverse proxy](https://www.cloudflare.com/learning/cdn/glossary/reverse-proxy/) and [load balancer](<https://en.wikipedia.org/wiki/Load_balancing_(computing)>) designed for dynamic [container](https://www.docker.com/resources/what-container/) environments. It integrates seamlessly with [Docker](<(https://www.docker.com/)>), automatically discovering and [routing](https://en.wikipedia.org/wiki/Routing) requests to services while supporting [Let's Encrypt SSL](<(https://www.cloudflare.com/learning/ssl/what-is-an-ssl-certificate/)>), middleware, and advanced traffic management.
+- [**🔄 Traefik**](https://traefik.io/traefik/): Traefik is a modern and powerful [reverse proxy](https://www.cloudflare.com/learning/cdn/glossary/reverse-proxy/) and [load balancer](<https://en.wikipedia.org/wiki/Load_balancing_(computing)>) designed for dynamic [container](https://www.docker.com/resources/what-container/) environments. It integrates seamlessly with [Docker](https://www.docker.com/), automatically discovering and [routing](https://en.wikipedia.org/wiki/Routing) requests to services while supporting [Let's Encrypt SSL](https://www.cloudflare.com/learning/ssl/what-is-an-ssl-certificate/), middleware, and advanced traffic management.
 - [**🛡️ CrowdSec**](https://www.crowdsec.net/): CrowdSec is an open-source security tool that analyzes [logs](https://en.wikipedia.org/wiki/Transaction_log) to detect and prevent malicious activity. It uses community-driven threat intelligence to [block attackers](<https://en.wikipedia.org/wiki/Block_(Internet)>) in real-time, enhancing server security through behavioral detection and [IP](https://en.wikipedia.org/wiki/IP_address) reputation filtering.
 
 At the end of this guide, you should be able to set up a home server environment with Ubuntu Server, Docker, Portainer, Traefik, and CrowdSec—enabling efficient container management, secure reverse proxying, and proactive threat defense. Let's get started! 🚀
@@ -157,13 +157,13 @@ Let it boot, and you should encounter an error because the USB key is still plug
 
 Final thing, let's check if we can connect to the server from another machine via SSH. First, find the server's IP by logging in and running the following command on the server:
 
-```bash title="From server"
+```sh title="From server"
 ip a
 ```
 
 It should give you a list of interfaces. Find the one that has an `inet` address formatted as `192.168.1.X`:
 
-```bash title="From server"
+```sh title="From server"
 ...
 4: wlp4s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
     link/ether xx:xx:xx:xx:xx:xx brd ff:ff:ff:ff:ff:ff
@@ -178,13 +178,13 @@ It should give you a list of interfaces. Find the one that has an `inet` address
 
 Let's connect via SSH.
 
-```bash title="From work machine"
+```sh title="From work machine"
 ssh myuser@192.168.1.X
 ```
 
 If it connects:
 
-```bash title="From work machine"
+```sh title="From work machine"
 ...
 Last login: Mon Jan 13 05:49:37 2025 from 192.168.1.Y
 myuser@myserver:~$
@@ -192,127 +192,14 @@ myuser@myserver:~$
 
 Then, congratulations! You've successfully set up a server similar to the ones you can rent from AWS or any other cloud provider 🤩. All the following commands will be executed from the work machine on behalf of the server via SSH from now on!
 
-## 🐋 Set Up Docker, Portainer, and Nginx Proxy Manager
-
-Now, it's time to set up all the necessary tools to deploy, maintain, and expose our services/applications: Docker, Portainer, and Nginx Proxy Manager.
-
-<figure markdown="span">
-  ![Docker, Portainer, and Nginx Proxy Manager](image-17.png)
-  <figcaption>Docker, Portainer, and Nginx Proxy Manager</figcaption>
-</figure>
-
-Let's first install Docker ([official link](https://docs.docker.com/engine/install/ubuntu/#installation-methods), if necessary):
-
-```bash
-# Add Docker's official GPG key
-sudo apt-get update
-sudo apt-get install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-```
-
-```bash
-# Install Docker
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-You can verify the Docker installation using the following command:
-
-```bash
-sudo docker version
-docker compose version
-```
-
-```bash
-Client: Docker Engine - Community
- Version:           27.4.1
- API version:       1.47
- Go version:        go1.22.10
- Git commit:        b9d17ea
- Built:             Tue Dec 17 15:45:46 2024
- OS/Arch:           linux/amd64
- Context:           default
-
-Server: Docker Engine - Community
- Engine:
-  Version:          27.4.1
-  API version:      1.47 (minimum version 1.24)
-  Go version:       go1.22.10
-  Git commit:       c710b88
-  Built:            Tue Dec 17 15:45:46 2024
-  OS/Arch:          linux/amd64
-  Experimental:     false
- containerd:
-  Version:          1.7.24
-  GitCommit:        88bf19b2105c8b17560993bee28a01ddc2f97182
- runc:
-  Version:          1.2.2
-  GitCommit:        v1.2.2-0-g7cb3632
- docker-init:
-  Version:          0.19.0
-  GitCommit:        de40ad0
-Docker Compose version v2.32.1
-```
-
-Then install Portainer ([official link](https://docs.portainer.io/start/install-ce/server/docker/linux#deployment), if necessary):
-
-```bash
-# Create Portainer volume
-sudo docker volume create portainer_data
-
-# Pull & Run Portainer
-sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:2.25.1
-```
-
-Once completed, you can **navigate to https://192.168.1.X:9443**. You should be prompted to **create the administrator account**. Once completed and logged in, the following screen should be presented to you:
-
-<figure markdown="span">
-  ![Portainer ready!](image-18.png)
-  <figcaption>Portainer ready!</figcaption>
-</figure>
-
-Congratulations, you've successfully installed Portainer! You can now deploy, maintain, and monitor containerized applications through a Web UI.
-
-Finally, let's install Nginx Proxy Manager ([official link](https://nginxproxymanager.com/guide/#quick-setup), if necessary):
-
-```bash
-# Create Nginx Proxy Manager volumes
-sudo docker volume create nginx_proxy_manager_data
-sudo docker volume create nginx_proxy_manager_etc_letsencrypt
-
-# Pull & Run Nginx Proxy Manager
-sudo docker run -d -p 80:80 -p 443:443 -p 81:81 --name nginx_proxy_manager --restart=always -v nginx_proxy_manager_data:/data -v nginx_proxy_manager_etc_letsencrypt:/etc/letsencrypt jc21/nginx-proxy-manager:2.12.2
-```
-
-Once completed, you can **navigate to http://192.168.1.X:81**. The login and password are `admin@example.com` and `changeme`. Once logged in, you will be prompted to change these parameters and will be welcomed with the following screen:
-
-<figure markdown="span">
-  ![Nginx Proxy Manager ready!](image-19.png)
-  <figcaption>Nginx Proxy Manager ready!</figcaption>
-</figure>
-
-Congratulation! you've successfully installed Nginx Proxy Manager! 🤗
-
-## 🌐 Expose Your Services to the Internet Securely
+## 🌐 Prepare DNS and ISP Router settings to forward HTTP/HTTPS requests
 
 In this section, we are going to expose Nginx Proxy Manager and Portainer to the outside world. The goal is to be able to manage, deploy, and maintain our services from anywhere! In this part, depending on your ISP and domain name provider, it's highly likely that you do not have exactly the same screens.
 
 <figure markdown="span">
-  ![Exposing Nginx Proxy Manager and Portainer to the outside world](image-20.png)
-  <figcaption>Exposing Nginx Proxy Manager and Portainer to the outside world</figcaption>
+  ![Prepare DNS and ISP Router settings to forward HTTP/HTTPS requests](image-20.png)
+  <figcaption>Prepare DNS and ISP Router settings to forward HTTP/HTTPS requests</figcaption>
 </figure>
-
-!!! warning
-
-    Beware, exposing Nginx Proxy Manager and Portainer allows people to attempt to **crack your login/password**. If they succeed, it means they have **control over the deployed applications**. So, if working from home is the only thing you do, it might be wise not to expose these two services and to only access them from your home network!
 
 Let's start by **forwarding ports 80 and 443 requests from our ISP router to our server's ports 80 and 443**:
 
@@ -345,23 +232,396 @@ Now let's **buy a domain name**. In my case I choosed [namecheap.com](https://ww
 
 !!! Note
 
-    Host means the subdomain name. For example, with a host of `nginx`, it will route the domain `nginx.mydomain.topdomain` to your ISP router.
+    Host means the subdomain name. For example, with a host of `traefik`, it will route the domain `traefik.mydomain.topdomain` to your ISP router.
 
-Let's go back to our home network and **configure Nginx to allow requests from these domains to our services**. We will use the example of Nginx Proxy Manager itself:
+Let's check if our DNS is correctly forwarding to our ISP router:
+
+```sh
+nslookup traefik.mydomain.topdomain
+```
+
+```sh
+Server:         127.0.0.53
+Address:        127.0.0.53#53
+
+Non-authoritative answer:
+traefik.mydomain.topdomain       canonical name = ispsubdomain.ispdomain.topdomain.
+Name:   ispsubdomain.ispdomain.topdomain
+Address: XXX.XXX.XXX.XXX
+Name:   ispsubdomain.ispdomain.topdomain
+Address: XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX
+```
+
+Congratulations, you've learned how to set up your DNS provider to forward requests to your ISP router! 🎉
+
+## 🐋 Set Up Docker, Portainer, Traefik, and CrowdSec to Expose Your Services to the Internet Securely
+
+Now, it's time to set up all the necessary tools to deploy, maintain, and expose our services/applications: Docker, Portainer, Traefik, and CrowdSec.
 
 <figure markdown="span">
-  ![Configure your "Let's Encrypt" SSL certificate for your domain](image-24.png)
-  <figcaption>Configure your "Let's Encrypt" SSL certificate for your domain</figcaption>
+  ![Docker, Portainer, Traefik, and CrowdSec](image-17.png)
+  <figcaption>Docker, Portainer, Traefik, and CrowdSec</figcaption>
 </figure>
+
+Let's first install Docker ([official link](https://docs.docker.com/engine/install/ubuntu/#installation-methods), if necessary):
+
+```sh
+# Add Docker's official GPG key
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+```sh
+# Install Docker
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+You can verify the Docker installation using the following command:
+
+```sh
+sudo docker version
+docker compose version
+```
+
+```sh
+Client: Docker Engine - Community
+ Version:           27.4.1
+ API version:       1.47
+ Go version:        go1.22.10
+ Git commit:        b9d17ea
+ Built:             Tue Dec 17 15:45:46 2024
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          27.4.1
+  API version:      1.47 (minimum version 1.24)
+  Go version:       go1.22.10
+  Git commit:       c710b88
+  Built:            Tue Dec 17 15:45:46 2024
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.7.24
+  GitCommit:        88bf19b2105c8b17560993bee28a01ddc2f97182
+ runc:
+  Version:          1.2.2
+  GitCommit:        v1.2.2-0-g7cb3632
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+Docker Compose version v2.32.1
+```
+
+Then install the Portainer, Traefik, and CrowdSec stack:
+
+```sh
+cat <<EOF
+services:
+  traefik:
+    build:
+      dockerfile_inline: |
+        # https://hub.docker.com/_/traefik/tags
+        FROM traefik:v3.3
+        RUN mkdir -p /etc/traefik/ && \
+          echo "http:" > /etc/traefik/dynamic.yml && \
+          echo "  middlewares:" >> /etc/traefik/dynamic.yml && \
+          echo "    crowdsec-bouncer-traefik-plugin:" >> /etc/traefik/dynamic.yml && \
+          echo "      plugin:" >> /etc/traefik/dynamic.yml && \
+          echo "        crowdsec-bouncer-traefik-plugin:" >> /etc/traefik/dynamic.yml && \
+          echo "          enabled: true" >> /etc/traefik/dynamic.yml && \
+          echo "          crowdsecAppsecEnabled: true" >> /etc/traefik/dynamic.yml && \
+          echo "          crowdsecLapiKey: ${CROWDSEC_BOUNCER_KEY_TRAEFIK}" >> /etc/traefik/dynamic.yml
+        ENTRYPOINT ["/entrypoint.sh"]
+    command: >-
+      --providers.docker=true
+      --providers.docker.exposedByDefault=false
+      --providers.docker.network=docker_default
+      --providers.file.filename=/etc/traefik/dynamic.yml
+      --entryPoints.http.address=:80
+      --entryPoints.https.address=:443
+      --entryPoints.stream-minecraft.address=:25565/tcp
+      --api=true
+      --ping=true
+      --certificatesresolvers.letsencrypt.acme.email=ilovedata.jjia@gmail.com
+      --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      --certificatesresolvers.letsencrypt.acme.caserver=${TRAEFIK_TLS_CASERVER}
+      --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http
+      --accesslog=true
+      --accesslog.addinternals=true
+      --accesslog.filepath=/var/log/traefik/access.log
+      --experimental.plugins.crowdsec-bouncer-traefik-plugin.modulename=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      --experimental.plugins.crowdsec-bouncer-traefik-plugin.version=v1.4.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - traefik_letsencrypt:/letsencrypt/
+      - traefik_var_log_traefik:/var/log/traefik/
+    ports:
+      - "80:80"
+      - "443:443"
+      - "25565:25565"
+    networks:
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.tls=${TRAEFIK_TLS}
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.tls.certresolver=letsencrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.entryPoints=http,https
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.service=api@internal
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-traefik.middlewares=crowdsec-bouncer-traefik-plugin@file,${COMPOSE_PROJECT_NAME}-traefik-basicauth
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-traefik-basicauth.basicauth.users=${TRAEFIK_USER}:${TRAEFIK_PASSWORD_HASHED}
+    healthcheck:
+      test: traefik healthcheck --ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  traefik_accesslog_logrotate:
+    build:
+      dockerfile_inline: |
+        # https://hub.docker.com/_/alpine/tags
+        FROM alpine:3.21.3
+        RUN apk add --no-cache logrotate docker-cli
+        RUN mkdir -p /etc/logrotate.d && \
+          echo "/var/log/traefik/access.log {" > /etc/logrotate.d/traefik && \
+          echo "  size ${TRAEFIK_ACCESSLOG_LOGROTATE_SIZE}" >> /etc/logrotate.d/traefik && \
+          echo "  rotate ${TRAEFIK_ACCESSLOG_LOGROTATE_ROTATE}" >> /etc/logrotate.d/traefik && \
+          echo "  maxage ${TRAEFIK_ACCESSLOG_LOGROTATE_MAXAGE}" >> /etc/logrotate.d/traefik && \
+          echo "  compress" >> /etc/logrotate.d/traefik && \
+          echo "  missingok" >> /etc/logrotate.d/traefik && \
+          echo "  notifempty" >> /etc/logrotate.d/traefik && \
+          echo "  postrotate" >> /etc/logrotate.d/traefik && \
+          echo "    docker kill --signal=\"USR1\" \$(docker ps --filter \"name=^${COMPOSE_PROJECT_NAME}-traefik-1$\" --format \"{{.ID}}\")" >> /etc/logrotate.d/traefik && \
+          echo "  endscript" >> /etc/logrotate.d/traefik && \
+          echo "}" >> /etc/logrotate.d/traefik && \
+          echo "${TRAEFIK_ACCESSLOG_LOGROTATE_CRON_EXPRESSION} logrotate -v /etc/logrotate.d/traefik" | crontab -
+        ENTRYPOINT ["crond", "-f"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - traefik_var_log_traefik:/var/log/traefik/
+    depends_on:
+      traefik:
+        condition: service_healthy
+    healthcheck:
+      test: pgrep crond
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  crowdsec:
+    build:
+      dockerfile_inline: |
+        # https://hub.docker.com/r/crowdsecurity/crowdsec/tags
+        FROM crowdsecurity/crowdsec:v1.6.5 AS crowdsec_builder
+        ENV DISABLE_ONLINE_API="true"
+        ENV NO_HUB_UPGRADE="true"
+        RUN ./docker_start.sh > /dev/null 2>&1 & \
+          for i in {1..5}; do cscli hub update || sleep 10; done && \
+          cscli hub upgrade && \
+          cscli collections install \
+            crowdsecurity/traefik \
+            crowdsecurity/http-cve \
+            crowdsecurity/base-http-scenarios \
+            crowdsecurity/http-dos \
+            crowdsecurity/sshd \
+            crowdsecurity/linux \
+            crowdsecurity/appsec-crs \
+            crowdsecurity/appsec-generic-rules \
+            crowdsecurity/appsec-virtual-patching \
+          && \
+          kill $(pgrep -f "crowdsec -c /etc/crowdsec/config.yaml") && \
+          rm /etc/crowdsec/local_api_credentials.yaml
+        WORKDIR /etc/crowdsec/acquis.d/
+        RUN echo "filenames:" > ./traefik.yml && \
+          echo "  - /var/log_traefik/access.log" >> ./traefik.yml && \
+          echo "labels:" >> ./traefik.yml && \
+          echo "  type: traefik" >> ./traefik.yml  && \
+          echo "appsec_config: crowdsecurity/appsec-default" > ./appsec.yml && \
+          echo "labels:" >> ./appsec.yml && \
+          echo "  type: appsec" >> ./appsec.yml && \
+          echo "listen_addr: 0.0.0.0:7422" >> ./appsec.yml && \
+          echo "source: appsec" >> ./appsec.yml
+
+        # https://hub.docker.com/r/crowdsecurity/crowdsec/tags
+        FROM crowdsecurity/crowdsec:v1.6.5
+        RUN mkdir -p /etc/crowdsec/acquis.d/
+        COPY --from=crowdsec_builder /etc/crowdsec/ /etc/crowdsec/
+        COPY --from=crowdsec_builder /etc/crowdsec/acquis.d/ /etc/crowdsec/acquis.d/
+        ENTRYPOINT ["/bin/bash", "-c", "/docker_start.sh & for i in {1..5}; do cscli bouncers list > /dev/null 2>&1 && break || sleep 10; done && cscli bouncers remove TRAEFIK > /dev/null 2>&1 || true && cscli bouncers add TRAEFIK --key ${CROWDSEC_BOUNCER_KEY_TRAEFIK} > /dev/null 2>&1 && tail -f /dev/null"]
+    environment:
+      DISABLE_ONLINE_API: "true"
+      NO_HUB_UPGRADE: "true"
+    volumes:
+      - crowdsec_var_lib_crowdsec_data:/var/lib/crowdsec/data/
+      - traefik_var_log_traefik:/var/log_traefik/:ro
+    networks:
+      - default
+    healthcheck:
+      test: "cscli metrics"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      traefik:
+        condition: service_healthy
+    restart: unless-stopped
+
+  portainer:
+    # https://hub.docker.com/r/portainer/portainer/tags
+    image: portainer/portainer-ce:2.26.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data/
+    networks:
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.tls=${TRAEFIK_TLS}
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.tls.certresolver=letsencrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.entryPoints=http,https
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.rule=Host(`${PORTAINER_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.service=${COMPOSE_PROJECT_NAME}-portainer
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-portainer.loadbalancer.server.port=9000
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-portainer.middlewares=crowdsec-bouncer-traefik-plugin@file
+    restart: unless-stopped
+
+volumes:
+  traefik_letsencrypt:
+  traefik_var_log_traefik:
+  crowdsec_var_lib_crowdsec_data:
+  portainer_data:
+
+networks:
+  default:
+EOF | sudo TRAEFIK_TLS=true TRAEFIK_TLS_CASERVER='https://acme-v02.api.letsencrypt.org/directory' TRAEFIK_HOST='traefik.mydomain.topdomain' TRAEFIK_USER='myuser' TRAEFIK_PASSWORD_HASHED='myhashedpassword' TRAEFIK_ACCESSLOG_LOGROTATE_SIZE='200M' TRAEFIK_ACCESSLOG_LOGROTATE_ROTATE='14' TRAEFIK_ACCESSLOG_LOGROTATE_MAXAGE='30' TRAEFIK_ACCESSLOG_LOGROTATE_CRON_EXPRESSION='0 0,12 * * *' CROWDSEC_BOUNCER_KEY_TRAEFIK=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c50) PORTAINER_HOST='portainer.mydomain.topdomain' docker compose -p docker -f - up -d --remove-orphans --build && sudo docker image prune -f
+```
+
+Once completed, you can **navigate to https://portainer.mydomain.topdomain**. You should be prompted to **create the administrator account**. Once completed and logged in, the following screen should be presented to you:
 
 <figure markdown="span">
-  !["Add Proxy Host" to the corresponding service with "Force SSL" and the corresponding SSL certificate](image-25.png)
-  <figcaption>"Add Proxy Host" to the corresponding service with "Force SSL" and the corresponding SSL certificate</figcaption>
+  ![Portainer ready!](image-18.png)
+  <figcaption>Portainer ready!</figcaption>
 </figure>
 
-The **same steps can be applied to Portainer**, but be sure to use `https` as the `Scheme` when adding the proxy host, because the Portainer service uses https by default.
+Congratulations, you've successfully installed Portainer! You can now deploy, maintain, and monitor containerized applications through a Web UI.
 
-**Going to "nginx.mydomain.topdomain" and "portainer.mydomain.topdomain", you should be able to access** your two services! Congratulations, you've learned how to expose your services to the Internet! 🎉
+You can also **navigate to http://traefik.mydomain.topdomain**. The login and password are the ones set by Traefik environment variables. **Passwords must be hashed using MD5, SHA1, or BCrypt**; to achieve that, you can use the [Bcrypt Hash Generator](https://bcrypt-generator.com/) online or, for a safer option, the [htpasswd command from the apache2-utils](https://packages.ubuntu.com/search?keywords=apache2-utils&searchon=names&suite=noble&section=all) package. Once logged in, you should see the following screen:
+
+<figure markdown="span">
+  ![Traefik ready!](image-19.png)
+  <figcaption>Treafik ready!</figcaption>
+</figure>
+
+Congratulation! you've successfully installed Traefik! 🤗
+
+!!! warning
+
+    Beware, exposing Traefik and Portainer allows people to attempt to **crack your login/password**. If they succeed, they will have **control over the deployed applications**. So, if working from home is the only thing you do, it might be wise not to expose these two services and to access them only from your home network. To achieve this, you should expose extra ports for Traefik and Portainer and remove the corresponding Traefik labels that route to the services. The extra ports will allow you to access Traefik and Portainer via 192.168.1.X.
+
+Lastly, about CrowdSec—it's an internal service that acts as middleware between Traefik and the services. To access it, you will need to use basic Docker CLI and Bash CLI:
+
+```sh
+sudo docker exec -it $(sudo docker ps --filter name="docker-crowdsec-1" --format "{{.ID}}") /bin/bash
+```
+
+Then you will be prompted to the CrowdSec container:
+
+```sh
+myuser@myserver:~$ sudo docker exec -it $(sudo docker ps --filter name="docker-crowdsec-1" --format "{{.ID}}") /bin/bash
+bcae0c3dccd6:/#
+```
+
+From there, you will be able to run several [cscli](https://docs.crowdsec.net/docs/cscli/) commands:
+
+- The currently active decisions, including active IP bans
+
+```sh
+bcae0c3dccd6:/# cscli decisions list
+╭─────┬──────────┬─────────────────┬────────────────────────────┬────────┬─────────┬───────────────────────────┬────────┬────────────┬──────────╮
+│  ID │  Source  │   Scope:Value   │           Reason           │ Action │ Country │             AS            │ Events │ expiration │ Alert ID │
+├─────┼──────────┼─────────────────┼────────────────────────────┼────────┼─────────┼───────────────────────────┼────────┼────────────┼──────────┤
+│ 336 │ crowdsec │ Ip:45.148.10.34 │ crowdsecurity/http-probing │ ban    │ NL      │ 48090 Techoff Srv Limited │ 11     │ 3h35m36s   │ 342      │
+╰─────┴──────────┴─────────────────┴────────────────────────────┴────────┴─────────┴───────────────────────────┴────────┴────────────┴──────────╯
+1 duplicated entries skipped
+```
+
+- The alerts, including IP bans
+
+```sh
+60dcca3bcedc:/# cscli alerts list
+╭─────┬────────────────────┬───────────────────────────────────────┬─────────┬─────────────────────────────────────────────┬───────────┬─────────────────────────────────────────╮
+│  ID │        value       │                 reason                │ country │                      as                     │ decisions │                created_at               │
+├─────┼────────────────────┼───────────────────────────────────────┼─────────┼─────────────────────────────────────────────┼───────────┼─────────────────────────────────────────┤
+│ 342 │ Ip:45.148.10.34    │ crowdsecurity/http-probing            │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 06:51:25.711705966 +0000 UTC │
+│ 341 │ Ip:45.148.10.34    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 06:51:26.235906638 +0000 UTC │
+│ 340 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 02:49:34.925254325 +0000 UTC │
+│ 339 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 01:43:30.620059821 +0000 UTC │
+│ 338 │ Ip:34.204.174.174  │ crowdsecurity/vpatch-git-config       │ US      │ 14618 AMAZON-AES                            │           │ 2025-03-07 01:18:21 +0000 UTC           │
+│ 337 │ Ip:195.178.110.163 │ crowdsecurity/http-probing            │ BG      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 01:17:18.527430962 +0000 UTC │
+│ 336 │ Ip:195.178.110.163 │ crowdsecurity/http-sensitive-files    │ BG      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 01:17:23.925647127 +0000 UTC │
+│ 335 │ Ip:172.212.103.85  │ crowdsecurity/CVE-2022-41082          │ US      │ 8075 MICROSOFT-CORP-MSN-AS-BLOCK            │ ban:1     │ 2025-03-07 00:38:04.857829837 +0000 UTC │
+│ 334 │ Ip:195.178.110.163 │ crowdsecurity/http-sensitive-files    │ BG      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-07 00:11:13.169639366 +0000 UTC │
+│ 333 │ Ip:47.83.150.190   │ crowdsecurity/thinkphp-cve-2018-20062 │ HK      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 23:38:58.80656314 +0000 UTC  │
+│ 332 │ Ip:47.83.150.190   │ crowdsecurity/CVE-2017-9841           │ HK      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 23:38:57.743199532 +0000 UTC │
+│ 331 │ Ip:47.83.150.190   │ crowdsecurity/http-probing            │ HK      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 23:37:50.77369468 +0000 UTC  │
+│ 330 │ Ip:47.83.150.190   │ crowdsecurity/CVE-2017-9841           │ HK      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 23:37:54.704898287 +0000 UTC │
+│ 329 │ Ip:47.83.150.190   │ crowdsecurity/http-cve-2021-41773     │ HK      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 23:37:50.773618378 +0000 UTC │
+│ 328 │ Ip:34.204.174.174  │ crowdsecurity/vpatch-git-config       │ US      │ 14618 AMAZON-AES                            │           │ 2025-03-06 22:01:32 +0000 UTC           │
+│ 327 │ Ip:45.148.10.34    │ crowdsecurity/http-probing            │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 20:01:08.946235719 +0000 UTC │
+│ 326 │ Ip:45.148.10.34    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 20:01:09.464984839 +0000 UTC │
+│ 325 │ Ip:34.204.174.174  │ crowdsecurity/vpatch-git-config       │ US      │ 14618 AMAZON-AES                            │           │ 2025-03-06 17:41:43 +0000 UTC           │
+│ 324 │ Ip:195.178.110.163 │ crowdsecurity/http-sensitive-files    │ BG      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 16:59:39.111415964 +0000 UTC │
+│ 323 │ Ip:34.204.174.174  │ crowdsecurity/vpatch-git-config       │ US      │ 14618 AMAZON-AES                            │           │ 2025-03-06 16:58:00 +0000 UTC           │
+│ 322 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 16:51:18.086862468 +0000 UTC │
+│ 321 │ Ip:34.204.174.174  │ crowdsecurity/vpatch-git-config       │ US      │ 14618 AMAZON-AES                            │           │ 2025-03-06 16:26:44 +0000 UTC           │
+│ 320 │ Ip:45.148.10.34    │ crowdsecurity/http-probing            │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 14:11:13.035448355 +0000 UTC │
+│ 319 │ Ip:45.148.10.34    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 14:11:13.56899664 +0000 UTC  │
+│ 318 │ Ip:8.222.172.249   │ crowdsecurity/thinkphp-cve-2018-20062 │ SG      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 13:45:57.230230638 +0000 UTC │
+│ 317 │ Ip:8.222.172.249   │ crowdsecurity/http-probing            │ SG      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 13:45:34.989475157 +0000 UTC │
+│ 316 │ Ip:8.222.172.249   │ crowdsecurity/CVE-2017-9841           │ SG      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 13:45:37.820707681 +0000 UTC │
+│ 315 │ Ip:8.222.172.249   │ crowdsecurity/http-cve-2021-41773     │ SG      │ 45102 Alibaba US Technology Co., Ltd.       │ ban:1     │ 2025-03-06 13:45:34.989421638 +0000 UTC │
+│ 314 │ Ip:78.153.140.224  │ crowdsecurity/http-probing            │ GB      │ 202306 Hostglobal.plus Ltd                  │ ban:1     │ 2025-03-06 13:26:10.789683174 +0000 UTC │
+│ 313 │ Ip:78.153.140.224  │ crowdsecurity/http-sensitive-files    │ GB      │ 202306 Hostglobal.plus Ltd                  │ ban:1     │ 2025-03-06 13:26:10.789440914 +0000 UTC │
+│ 312 │ Ip:78.153.140.179  │ crowdsecurity/http-probing            │ GB      │ 202306 Hostglobal.plus Ltd                  │ ban:1     │ 2025-03-06 11:06:07.846945115 +0000 UTC │
+│ 311 │ Ip:78.153.140.179  │ crowdsecurity/http-sensitive-files    │ GB      │ 202306 Hostglobal.plus Ltd                  │ ban:1     │ 2025-03-06 11:06:07.846818179 +0000 UTC │
+│ 310 │ Ip:192.168.1.254   │ crowdsecurity/vpatch-env-access       │         │                                             │           │ 2025-03-06 06:46:48 +0000 UTC           │
+│ 309 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 04:54:44.045808147 +0000 UTC │
+│ 308 │ Ip:45.148.10.90    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-06 04:39:40.9902859 +0000 UTC   │
+│ 307 │ Ip:31.210.213.230  │ crowdsecurity/CVE-2017-9841           │ RU      │ 43727 Jsc Kvant-telekom                     │ ban:1     │ 2025-03-06 03:45:33.005141454 +0000 UTC │
+│ 306 │ Ip:31.210.213.230  │ crowdsecurity/http-cve-2021-41773     │ RU      │ 43727 Jsc Kvant-telekom                     │ ban:1     │ 2025-03-06 03:45:16.048775589 +0000 UTC │
+│ 305 │ Ip:8.134.196.56    │ crowdsecurity/thinkphp-cve-2018-20062 │ CN      │ 37963 Hangzhou Alibaba Advertising Co.,Ltd. │ ban:1     │ 2025-03-05 15:33:13.404183934 +0000 UTC │
+│ 304 │ Ip:8.134.196.56    │ crowdsecurity/CVE-2017-9841           │ CN      │ 37963 Hangzhou Alibaba Advertising Co.,Ltd. │ ban:1     │ 2025-03-05 15:33:12.786613671 +0000 UTC │
+│ 303 │ Ip:8.134.196.56    │ crowdsecurity/http-probing            │ CN      │ 37963 Hangzhou Alibaba Advertising Co.,Ltd. │ ban:1     │ 2025-03-05 15:31:51.222022344 +0000 UTC │
+│ 302 │ Ip:8.134.196.56    │ crowdsecurity/CVE-2017-9841           │ CN      │ 37963 Hangzhou Alibaba Advertising Co.,Ltd. │ ban:1     │ 2025-03-05 15:32:10.366378223 +0000 UTC │
+│ 301 │ Ip:8.134.196.56    │ crowdsecurity/http-cve-2021-41773     │ CN      │ 37963 Hangzhou Alibaba Advertising Co.,Ltd. │ ban:1     │ 2025-03-05 15:31:51.221935472 +0000 UTC │
+│ 300 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-05 13:57:15.586178679 +0000 UTC │
+│ 299 │ Ip:45.148.10.35    │ crowdsecurity/http-sensitive-files    │ NL      │ 48090 Techoff Srv Limited                   │ ban:1     │ 2025-03-05 08:31:15.415798442 +0000 UTC │
+│ 298 │ Ip:141.147.6.15    │ crowdsecurity/thinkphp-cve-2018-20062 │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:27:20.692453456 +0000 UTC │
+│ 297 │ Ip:141.147.6.15    │ crowdsecurity/CVE-2017-9841           │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:26:19.227214095 +0000 UTC │
+│ 296 │ Ip:141.147.6.15    │ crowdsecurity/CVE-2017-9841           │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:25:17.170348689 +0000 UTC │
+│ 295 │ Ip:141.147.6.15    │ crowdsecurity/http-probing            │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:24:02.458370769 +0000 UTC │
+│ 294 │ Ip:141.147.6.15    │ crowdsecurity/CVE-2017-9841           │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:24:15.607530994 +0000 UTC │
+│ 293 │ Ip:141.147.6.15    │ crowdsecurity/http-cve-2021-41773     │ DE      │ 31898 ORACLE-BMC-31898                      │ ban:1     │ 2025-03-05 07:24:02.458262457 +0000 UTC │
+╰─────┴────────────────────┴───────────────────────────────────────┴─────────┴─────────────────────────────────────────────┴───────────┴─────────────────────────────────────────╯
+```
+
+Congratulations! You've successfully installed CrowdSec! 🤗 It also shows how scary the Internet can be 😣.
 
 ## 🎯 Example Use Case: Open WebUI and Ollama Setup
 
@@ -430,7 +690,7 @@ You should end up with a configuration that looks like this:
   <figcaption>Configuring the Open WebUI and Ollama stack</figcaption>
 </figure>
 
-Let's now expose our application to the outside world. To be precise, it means exposing the Open WebUI service. This part is identical to when Nginx Proxy Manager and Portainer were exposed, so I invite you to **check the [previous part](#-expose-your-services-to-the-internet-securely)**. The important part is to **expose only the Open WebUI and enable `Websockets Support`** because text writing on the fly is done through a websocket. After that, you should be able to **navigate to 'llm.mydomain.topdomain'**, and by **configuring your admin account (mandatory on first page load)**, you should end up on the following page:
+Let's now expose our application to the outside world. To be precise, it means exposing the Open WebUI service. This part is identical to when Nginx Proxy Manager and Portainer were exposed, so I invite you to **check the previous part**. The important part is to **expose only the Open WebUI and enable `Websockets Support`** because text writing on the fly is done through a websocket. After that, you should be able to **navigate to 'llm.mydomain.topdomain'**, and by **configuring your admin account (mandatory on first page load)**, you should end up on the following page:
 
 <figure markdown="span">
   ![Open WebUI](image-28.png)
