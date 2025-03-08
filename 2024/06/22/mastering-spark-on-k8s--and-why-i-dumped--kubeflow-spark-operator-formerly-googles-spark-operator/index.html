@@ -1,0 +1,1595 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../../04/18/introducing-tarp-stack---tapir-react-and-postgresql/">
+      
+      
+        <link rel="next" href="../../../../2025/01/01/from-aws-to-diy-building-a-cost-effective--home-server-with-ubuntu-server-docker-portainer--nginx-on-a-high-performance-mini-pc-/">
+      
+      
+      <link rel="icon" href="../../../../assets/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>Mastering Spark on K8s 🔥 and Why I Dumped 💔 Kubeflow Spark Operator (Formerly Google's Spark Operator)! - LovinData - Simplified Full Stack Data Engineering</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-ZZ86YMNTY8"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-ZZ86YMNTY8",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-ZZ86YMNTY8",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+   <link href="../../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#k8s-spark-and-kubeflow" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="LovinData - Simplified Full Stack Data Engineering" class="md-header__button md-logo" aria-label="LovinData - Simplified Full Stack Data Engineering" data-md-component="logo">
+      
+  <img src="../../../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LovinData - Simplified Full Stack Data Engineering
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Mastering Spark on K8s 🔥 and Why I Dumped 💔 Kubeflow Spark Operator (Formerly Google's Spark Operator)!
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label=""  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label=""  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Latest posts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../archive/2025/" class="md-tabs__link">
+          
+  
+  Archive
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../category/backend/" class="md-tabs__link">
+          
+  
+  Categories
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="LovinData - Simplified Full Stack Data Engineering" class="md-nav__button md-logo" aria-label="LovinData - Simplified Full Stack Data Engineering" data-md-component="logo">
+      
+  <img src="../../../../assets/logo.png" alt="logo">
+
+    </a>
+    LovinData - Simplified Full Stack Data Engineering
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latest posts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Archive
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Archive
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../archive/2025/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2025
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../archive/2024/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2024
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Categories
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Categories
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/backend/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backend
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/crowdsec/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CrowdSec
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/data-engineering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Engineering
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/devops/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DevOps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/docker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/frontend/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Frontend
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/kubernetes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kubernetes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/nginx/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Nginx
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/python/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/scala/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scala
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/traefik/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Traefik
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../category/typescript/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TypeScript
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#k8s-spark-and-kubeflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      🤔 K8s, Spark and Kubeflow?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-k8s-for-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      👨‍💻 Local K8s for development
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="👨‍💻 Local K8s for development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#isolated-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      Isolated namespace
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spark-on-k8s-via-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      💻 Spark on K8s via CLI
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💻 Spark on K8s via CLI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#submitting-a-spark-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      Submitting a Spark job
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spark-on-k8s-via-kubeflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Spark on K8s via Kubeflow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Spark on K8s via Kubeflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#submitting-a-spark-job_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Submitting a Spark job
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔚 Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+  <div class="md-content md-content--post" data-md-component="content">
+    <div class="md-sidebar md-sidebar--post" data-md-component="sidebar" data-md-type="navigation">
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner md-post">
+          <nav class="md-nav md-nav--primary">
+            <div class="md-post__back">
+              <div class="md-nav__title md-nav__container">
+                <a href="../../../.." class="md-nav__link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+                  <span class="md-ellipsis">
+                    Back to index
+                  </span>
+                </a>
+              </div>
+            </div>
+            
+            <ul class="md-post__meta md-nav__list">
+              <li class="md-nav__item md-nav__item--section">
+                <div class="md-post__title">
+                  <span class="md-ellipsis">
+                    Metadata
+                  </span>
+                </div>
+                <nav class="md-nav">
+                  <ul class="md-nav__list">
+                    <li class="md-nav__item">
+                      <div class="md-nav__link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 19H5V8h14m-3-7v2H8V1H6v2H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1V1m-1 11h-5v5h5z"/></svg>
+                        <time datetime="2024-06-22 00:00:00+00:00" class="md-ellipsis">June 22, 2024</time>
+                      </div>
+                    </li>
+                    
+                    
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3v15h3V3zm3 2 4 13 3-1-4-13zM5 5v13h3V5zM3 19v2h18v-2z"/></svg>
+                          <span class="md-ellipsis">
+                            in
+                            
+                              <a href="../../../../category/kubernetes/">Kubernetes</a>, 
+                              <a href="../../../../category/data-engineering/">Data Engineering</a>, 
+                              <a href="../../../../category/devops/">DevOps</a></span>
+                        </div>
+                      </li>
+                    
+                    
+                      
+                      <li class="md-nav__item">
+                        <div class="md-nav__link">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 20a8 8 0 0 0 8-8 8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8m0-18a10 10 0 0 1 10 10 10 10 0 0 1-10 10C6.47 22 2 17.5 2 12A10 10 0 0 1 12 2m.5 5v5.25l4.5 2.67-.75 1.23L11 13V7z"/></svg>
+                          <span class="md-ellipsis">
+                            
+                              13 min read
+                            
+                          </span>
+                        </div>
+                      </li>
+                    
+                  </ul>
+                </nav>
+              </li>
+            </ul>
+          </nav>
+          
+        </div>
+      </div>
+    </div>
+    <article class="md-content__inner md-typeset">
+      
+        
+
+
+  <h1>Mastering Spark on K8s 🔥 and Why I Dumped 💔 Kubeflow Spark Operator (Formerly Google's Spark Operator)!</h1>
+
+<p>Heyoooo <a href="https://spark.apache.org/">Spark ⚡</a> developers! My product manager several months ago asked me one question: "Is it possible to run Spark applications without <a href="https://kubernetes.io/">K8s 🐳</a> cluster-level access?" At the time, I only knew the <a href="https://github.com/kubeflow/spark-operator">Kubeflow 🔧 Spark Operator</a> well and was using it for deploying all my Spark applications. For those who know, you must have K8s cluster-level access to use the Kubeflow Spark Operator. The reasons are because it installs <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions">CRDs</a> and <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole">ClusterRole</a>. So I told him "no" with these reasons, and on his side, he tried his best to convince the prospect with the constraint in mind. At the enterprise level, they usually have a <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/">multi-tenant K8s cluster</a> segregated by company/department, project, and environment (dev, uat, pre-prod, or prod) using <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/#namespaces">Namespaces</a>. This way, they make the most of the computing resources allocated. Plus, if one project does not meet the expectation or the contract ends, hop hop <code>kubectl delete &lt;compordept&gt;-&lt;project&gt;-&lt;env&gt;</code> and it's like the project has never existed. I am currently writing to tell my product manager, "Yes, it's possible to run Spark applications without K8s cluster-level access."! Here is how! 🚀</p>
+<!-- more -->
+
+<p><a class="glightbox" href="../../../../3/image.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Spark on K8s" src="../../../../3/image.png" /></a></p>
+<h2 id="k8s-spark-and-kubeflow">🤔 K8s, Spark and Kubeflow?</h2>
+<p>What are <strong>K8s</strong>, <strong>Spark</strong>, and <strong>Kubeflow Spark Operator</strong>? Quickly:</p>
+<ul>
+<li>🐳 <a href="https://kubernetes.io/"><strong>K8s</strong></a>: Kubernetes (K8s) is an open-source container orchestration platform designed to automate the deployment, scaling, and management of containerized applications, often used to orchestrate complex frameworks like <a href="https://spark.apache.org/">Apache Spark</a> for efficient data processing at scale.</li>
+<li>⚡ <a href="https://spark.apache.org/"><strong>Spark</strong></a>: Apache Spark is an open-source distributed computing framework that enables fast data processing and analytics, widely recognized and supported by the company <a href="https://www.databricks.com/">Databricks</a> in big data environments.</li>
+<li>🔧 <a href="https://github.com/kubeflow/spark-operator"><strong>Kubeflow Spark Operator</strong></a>: The Kubeflow Spark Operator facilitates seamless integration of Apache Spark with Kubernetes. Originally developed by <a href="https://cloud.google.com/?hl=en">Google Cloud Platform</a>, it has recently been donated to the <a href="https://www.kubeflow.org/">Kubeflow community</a>.</li>
+</ul>
+<p>At the end of this guide, you should also be able to launch a Spark application on a Kubernetes cluster and understand when to use basic Spark CLI or the Kubeflow Spark Operator. Let's get started!</p>
+<h2 id="local-k8s-for-development">👨‍💻 Local K8s for development</h2>
+<p>In this part, we are going to install a one-node K8s locally and simulate an enterprise K8s segregated by namespaces.</p>
+<figure>
+  <a class="glightbox" href="../../../../3/image-1.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Segregate by namespaces" src="../../../../3/image-1.png" /></a>
+  <figcaption>Segregate by namespaces</figcaption>
+</figure>
+<p>The goal is to set up the prerequisites for when we are going to launch Spark applications.</p>
+<h3 id="installation">Installation</h3>
+<p>In the past, there was <a href="https://minikube.sigs.k8s.io/docs/">minikube</a> for local K8s development. But now, <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> has integrated Kubernetes directly 🤩! So let's install Docker Desktop.</p>
+<figure>
+  <a class="glightbox" href="../../../../3/image-2.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Downloading Docker Dekstop" src="../../../../3/image-2.png" /></a>
+  <figcaption>Downloading Docker Dekstop</figcaption>
+</figure>
+<p>Then you just need to launch the executable and follow the instructions. Once you have successfully installed Docker Desktop, to have your single-node K8s cluster:</p>
+<ul>
+<li>Go to <code>Settings (top-right) &gt; Kubernetes</code></li>
+<li>Check the box <code>Enable Kubernetes</code></li>
+<li>Click on <code>Apply &amp; restart</code> &gt; Click on <code>Install</code></li>
+<li>It should start pulling necessary Docker images</li>
+</ul>
+<p>After a while, you should see the screen with the little <code>Kubernetes running</code> on the bottom left. You can validate your installation by opening a terminal, then the following command.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>nodes
+</span></code></pre></div>
+<p>It should return an output similar to this:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>NAME<span class="w">             </span>STATUS<span class="w">   </span>ROLES<span class="w">           </span>AGE<span class="w">     </span>VERSION
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker-desktop<span class="w">   </span>Ready<span class="w">    </span>control-plane<span class="w">   </span>6d23h<span class="w">   </span>v1.29.2
+</span></code></pre></div>
+<p>Nice! 🎉 You've successfully installed Kubernetes.</p>
+<h3 id="isolated-namespace">Isolated namespace</h3>
+<p>The goal now is to set up isolated namespaces to simulate an enterprise multi-tenant Kubernetes cluster. To set up an isolated namespace, here are the essentials:</p>
+<ul>
+<li><strong>📦🌐 A namespace under quota</strong>: Kubernetes resources are not unlimited. The relevant resources to limit are CPU, RAM, ephemeral storage, number of pods, and other resources as necessary.</li>
+<li><strong>👩‍💻🌐 An admin namespace role</strong>: Users must be restricted to a namespace, but within this namespace, Kubernetes admins should provide all necessary access for them to operate autonomously. However, they should not have permission to create, update, or delete quotas and roles.</li>
+<li><strong>🔄🌐 Expirable access</strong>: Projects do not last indefinitely, so access should not be permanent either.</li>
+</ul>
+<p>Let's get to work!</p>
+<p>First, the <strong>namespace under quota</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>create<span class="w"> </span>ns<span class="w"> </span>compordept-project-env<span class="w"> </span><span class="c1"># Create the namespace.</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-context<span class="w"> </span>docker-desktop<span class="w"> </span>--namespace<span class="o">=</span>compordept-project-env<span class="w"> </span><span class="c1"># Switch to the namespace.</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">---</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">apiVersion: v1</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">kind: ResourceQuota</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">metadata:</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">  name: namespace-quota</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">spec:</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">  hard:</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s1">    limits.memory: &quot;1939Mi&quot;</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">    requests.cpu: &quot;3&quot;</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="s1">    requests.memory: &quot;1939Mi&quot;</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="s1">    persistentvolumeclaims: &quot;9&quot;</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="s1">    requests.ephemeral-storage: &quot;227Gi&quot;</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="s1">    limits.ephemeral-storage: &quot;227Gi&quot;</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="s1">    pods: &quot;27&quot;</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="s1">    services: &quot;9&quot;</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="s1">&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-
+</span></code></pre></div>
+<p>Second, the <strong>admin namespace role:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s1"># This script lists all namespaced resources and sub-resources except &quot;resourcequotas&quot; and &quot;role&quot;. The goal is to have them in a final YAML array which we can pipe to the kubectl command.</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">import subprocess, json</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">kubectl_get_raw_as_dict = lambda path: json.loads(subprocess.check_output(f&quot;kubectl get --raw {path}&quot;, shell=True, text=True, stderr=subprocess.PIPE))</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">print_as_yaml_array = lambda list_of_strings: print(json.dumps(list_of_strings))</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">paths = kubectl_get_raw_as_dict(&quot;/&quot;)[&quot;paths&quot;]</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">output_resources = []</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s1">for path in paths:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">  try:</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">    resources = kubectl_get_raw_as_dict(path)[&quot;resources&quot;]</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">    resources = [resource[&quot;name&quot;] for resource in resources if resource[&quot;namespaced&quot;] == True and (resource[&quot;name&quot;] not in [&quot;resourcequotas&quot;, &quot;roles&quot;])]</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="s1">    output_resources.extend(resources)</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="s1">  except:</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="s1">    pass</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="s1">print_as_yaml_array(output_resources) # Print to the console for piping.</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="s1">&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>-I<span class="w"> </span><span class="o">{}</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="s1">---</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="s1">apiVersion: rbac.authorization.k8s.io/v1</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="s1">kind: Role</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="s1">metadata:</span>
+</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="s1">  name: namespace-admin</span>
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="s1">rules:</span>
+</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="s1">  - apiGroups: [&quot;*&quot;]</span>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="s1">    resources: {} # Piped here!</span>
+</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="s1">    verbs: [&quot;*&quot;]</span>
+</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="s1">  - apiGroups: [&quot;*&quot;]</span>
+</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="s1">    resources: [&quot;resourcequotas&quot;]</span>
+</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="s1">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]</span>
+</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="s1">  - apiGroups: [&quot;*&quot;]</span>
+</span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="s1">    resources: [&quot;roles&quot;]</span>
+</span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="s1">    verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]</span>
+</span><span id="__span-3-34"><a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>
+</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="s1">---</span>
+</span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="s1">apiVersion: rbac.authorization.k8s.io/v1</span>
+</span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="s1">kind: RoleBinding</span>
+</span><span id="__span-3-38"><a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="s1">metadata:</span>
+</span><span id="__span-3-39"><a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="s1">  name: namespace-admin</span>
+</span><span id="__span-3-40"><a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="s1">subjects:</span>
+</span><span id="__span-3-41"><a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="s1">  - kind: Group</span>
+</span><span id="__span-3-42"><a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a><span class="s1">    name: namespace-admin</span>
+</span><span id="__span-3-43"><a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="s1">    apiGroup: rbac.authorization.k8s.io</span>
+</span><span id="__span-3-44"><a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="s1">roleRef:</span>
+</span><span id="__span-3-45"><a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="s1">  kind: Role</span>
+</span><span id="__span-3-46"><a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="s1">  name: namespace-admin</span>
+</span><span id="__span-3-47"><a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a><span class="s1">  apiGroup: rbac.authorization.k8s.io</span>
+</span><span id="__span-3-48"><a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a><span class="s1">&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-
+</span></code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The command <code>kubectl api-resources --namespaced=true</code> unfortunately does not list the sub-resources for those who thought about it. This means if this command is used as a base, the sub-resource <code>pods/log</code> won't be set for our <code>namespace-admin</code>.</p>
+</div>
+<p>Third, the <strong>expirable access</strong>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Generate CSR (on user side)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>openssl<span class="w"> </span>genrsa<span class="w"> </span>-out<span class="w"> </span>compordept-project-env-admin.key<span class="w"> </span><span class="m">2048</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>openssl<span class="w"> </span>req<span class="w"> </span>-new<span class="w"> </span>-key<span class="w"> </span>compordept-project-env-admin.key<span class="w"> </span>-out<span class="w"> </span>compordept-project-env-admin.csr<span class="w"> </span>-subj<span class="w"> </span><span class="s2">&quot;/CN=namespace-admin/O=namespace-admin&quot;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Validate CSR &amp; Generate CRT (on K8S admin side)</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>cat<span class="w"> </span>compordept-project-env-admin.csr<span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;\n&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>-I<span class="w"> </span><span class="o">{}</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">---</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">apiVersion: certificates.k8s.io/v1</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">kind: CertificateSigningRequest</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">metadata:</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">  name: compordept-project-env-admin</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">spec:</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">  request: {}</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">  signerName: kubernetes.io/kube-apiserver-client</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">  expirationSeconds: 7898368 # 3 months</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="s1">  usages:</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="s1">    - client auth</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="s1">&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>kubectl<span class="w"> </span>certificate<span class="w"> </span>approve<span class="w"> </span>compordept-project-env-admin
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>kubectl<span class="w"> </span>get<span class="w"> </span>csr<span class="w"> </span>compordept-project-env-admin<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.status.certificate}&#39;</span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d<span class="w"> </span>&gt;<span class="w"> </span>compordept-project-env-admin.crt<span class="w"> </span><span class="c1"># Certificate to give to your user</span>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="c1"># Set CRT and use created user (on user side)</span>
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-credentials<span class="w"> </span>compordept-project-env-admin<span class="w"> </span>--client-key<span class="o">=</span>compordept-project-env-admin.key<span class="w"> </span>--client-certificate<span class="o">=</span>compordept-project-env-admin.crt<span class="w"> </span>--embed-certs<span class="o">=</span><span class="nb">true</span>
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-context<span class="w"> </span>docker-desktop<span class="w"> </span>--user<span class="o">=</span>compordept-project-env-admin
+</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>rm<span class="w"> </span>compordept-project-env-admin.*<span class="w"> </span><span class="c1"># Purge certificates from disk</span>
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>As you can see by the comments, creating the <code>namespace-admin</code> user <strong>involves the K8s admin and the requester</strong> in a perfect world. But, for simplicity, the K8s admin can also just run all the commands and provide the final <code>compordept-project-env-admin.key</code> and <code>compordept-project-env-admin.crt</code>.</p>
+</div>
+<p>If you've reached this point, you should be set in the namespace <code>compordept-project-env-admin</code> as the user <code>namespace-admin</code>! The following command should list you the <code>namespace-admin</code> role.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>role
+</span></code></pre></div>
+<p>This role can be viewed using:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kubectl<span class="w"> </span>describe<span class="w"> </span>role<span class="w"> </span>namespace-admin
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Name:<span class="w">         </span>namespace-admin
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Labels:<span class="w">       </span>&lt;none&gt;
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Annotations:<span class="w">  </span>&lt;none&gt;
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>PolicyRule:
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>Resources<span class="w">                          </span>Non-Resource<span class="w"> </span>URLs<span class="w">  </span>Resource<span class="w"> </span>Names<span class="w">  </span>Verbs
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>---------<span class="w">                          </span>-----------------<span class="w">  </span>--------------<span class="w">  </span>-----
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>bindings.*<span class="w">                         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>configmaps.*<span class="w">                       </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>controllerrevisions.*<span class="w">              </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>cronjobs.*/status<span class="w">                  </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>cronjobs.*<span class="w">                         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>csistoragecapacities.*<span class="w">             </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>daemonsets.*/status<span class="w">                </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>daemonsets.*<span class="w">                       </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span>deployments.*/scale<span class="w">                </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span>deployments.*/status<span class="w">               </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span>deployments.*<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">  </span>endpoints.*<span class="w">                        </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span>endpointslices.*<span class="w">                   </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">  </span>events.*<span class="w">                           </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span>horizontalpodautoscalers.*/status<span class="w">  </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span>horizontalpodautoscalers.*<span class="w">         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">  </span>ingresses.*/status<span class="w">                 </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="w">  </span>ingresses.*<span class="w">                        </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">  </span>jobs.*/status<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">  </span>jobs.*<span class="w">                             </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">  </span>leases.*<span class="w">                           </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">  </span>limitranges.*<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">  </span>localsubjectaccessreviews.*<span class="w">        </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">  </span>networkpolicies.*<span class="w">                  </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">  </span>persistentvolumeclaims.*/status<span class="w">    </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">  </span>persistentvolumeclaims.*<span class="w">           </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">  </span>poddisruptionbudgets.*/status<span class="w">      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">  </span>poddisruptionbudgets.*<span class="w">             </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-35"><a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">  </span>pods.*/attach<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-36"><a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="w">  </span>pods.*/binding<span class="w">                     </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-37"><a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="w">  </span>pods.*/ephemeralcontainers<span class="w">         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-38"><a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">  </span>pods.*/eviction<span class="w">                    </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-39"><a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">  </span>pods.*/exec<span class="w">                        </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-40"><a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">  </span>pods.*/log<span class="w">                         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-41"><a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="w">  </span>pods.*/portforward<span class="w">                 </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-42"><a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">  </span>pods.*/proxy<span class="w">                       </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-43"><a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">  </span>pods.*/status<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-44"><a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">  </span>pods.*<span class="w">                             </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-45"><a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">  </span>podtemplates.*<span class="w">                     </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-46"><a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="w">  </span>replicasets.*/scale<span class="w">                </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-47"><a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">  </span>replicasets.*/status<span class="w">               </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-48"><a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">  </span>replicasets.*<span class="w">                      </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-49"><a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="w">  </span>replicationcontrollers.*/scale<span class="w">     </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-50"><a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a><span class="w">  </span>replicationcontrollers.*/status<span class="w">    </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-51"><a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a><span class="w">  </span>replicationcontrollers.*<span class="w">           </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-52"><a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a><span class="w">  </span>resourcequotas.*/status<span class="w">            </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-53"><a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a><span class="w">  </span>rolebindings.*<span class="w">                     </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-54"><a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a><span class="w">  </span>secrets.*<span class="w">                          </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-55"><a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a><span class="w">  </span>serviceaccounts.*/token<span class="w">            </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-56"><a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a><span class="w">  </span>serviceaccounts.*<span class="w">                  </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-57"><a id="__codelineno-7-57" name="__codelineno-7-57" href="#__codelineno-7-57"></a><span class="w">  </span>services.*/proxy<span class="w">                   </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-58"><a id="__codelineno-7-58" name="__codelineno-7-58" href="#__codelineno-7-58"></a><span class="w">  </span>services.*/status<span class="w">                  </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-59"><a id="__codelineno-7-59" name="__codelineno-7-59" href="#__codelineno-7-59"></a><span class="w">  </span>services.*<span class="w">                         </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-60"><a id="__codelineno-7-60" name="__codelineno-7-60" href="#__codelineno-7-60"></a><span class="w">  </span>statefulsets.*/scale<span class="w">               </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-61"><a id="__codelineno-7-61" name="__codelineno-7-61" href="#__codelineno-7-61"></a><span class="w">  </span>statefulsets.*/status<span class="w">              </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-62"><a id="__codelineno-7-62" name="__codelineno-7-62" href="#__codelineno-7-62"></a><span class="w">  </span>statefulsets.*<span class="w">                     </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>*<span class="o">]</span>
+</span><span id="__span-7-63"><a id="__codelineno-7-63" name="__codelineno-7-63" href="#__codelineno-7-63"></a><span class="w">  </span>resourcequotas.*<span class="w">                   </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>get<span class="w"> </span>list<span class="w"> </span>watch<span class="o">]</span>
+</span><span id="__span-7-64"><a id="__codelineno-7-64" name="__codelineno-7-64" href="#__codelineno-7-64"></a><span class="w">  </span>roles.*<span class="w">                            </span><span class="o">[]</span><span class="w">                 </span><span class="o">[]</span><span class="w">              </span><span class="o">[</span>get<span class="w"> </span>list<span class="w"> </span>watch<span class="o">]</span>
+</span></code></pre></div>
+<p>This command should give you a "forbidden access" error.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>ns
+</span></code></pre></div>
+<p>If your manager or you feel unhappy with the project, you can purge the namespace and the authorized certificate 💔 just with the following commands.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-context<span class="w"> </span>docker-desktop<span class="w"> </span>--user<span class="o">=</span>docker-desktop<span class="w"> </span><span class="c1"># Set back to the K8s admin user</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-context<span class="w"> </span>docker-desktop<span class="w"> </span>--namespace<span class="o">=</span>default<span class="w"> </span><span class="c1"># Set back to the default namespace</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>csr<span class="w"> </span>compordept-project-env-admin
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>ns<span class="w"> </span>compordept-project-env
+</span></code></pre></div>
+<p>Congratulations! 🎉 You know how to set up and manage a multi-tenant K8s cluster organized by namespaces!</p>
+<h2 id="spark-on-k8s-via-cli">💻 Spark on K8s via CLI</h2>
+<p>In this part, we are going to install Spark and launch <code>spark-submit</code> directly on the previously set up K8s namespace!</p>
+<figure>
+  <a class="glightbox" href="../../../../3/image-3.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Spark on K8s via CLI" src="../../../../3/image-3.png" /></a>
+  <figcaption>Spark on K8s via CLI</figcaption>
+</figure>
+<p>Let's get to work!</p>
+<h3 id="installation_1">Installation</h3>
+<p>Three prerequisites are needed to be able to launch Spark on K8s using the <code>spark-submit</code> command.</p>
+<ul>
+<li>🗝️ K8s credentials setup on the machine: Already done previously 😇!</li>
+<li>⚡ Spark installed on the machine executing the command</li>
+<li>🔧 A dedicated K8s <strong><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/">service account</a> for the Spark driver pod</strong>: This is necessary because it's the <a href="https://spark.apache.org/docs/latest/running-on-kubernetes.html#how-it-works">Spark driver pod who creates Spark executors and monitors them</a>, manages necessary <a href="https://kubernetes.io/docs/concepts/services-networking/service/">services</a>, manages necessary <a href="https://kubernetes.io/docs/concepts/configuration/configmap/">configmaps</a> and claims or releases <a href="https://kubernetes.io/docs/concepts/storage/volumes/">volumes</a>.</li>
+</ul>
+<p>To install Spark, here are the two necessary commands.</p>
+<ul>
+<li>Install <a href="https://adoptium.net/marketplace/?version=17">Java 17</a> first using <a href="https://get-coursier.io/docs/cli-install">Coursier</a></li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-fL<span class="w"> </span><span class="s2">&quot;https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>-d<span class="w"> </span>&gt;<span class="w"> </span>cs
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>chmod<span class="w"> </span>+x<span class="w"> </span>cs
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>./cs<span class="w"> </span>setup<span class="w"> </span>-y<span class="w"> </span>--jvm<span class="w"> </span><span class="m">17</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>rm<span class="w"> </span>cs
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nb">source</span><span class="w"> </span>~/.profile
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>java<span class="w"> </span>--version
+</span></code></pre></div>
+<ul>
+<li>Install <a href="https://spark.apache.org/downloads.html">Spark</a></li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/apps/spark
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-fLo<span class="w"> </span>~/apps/spark/spark-3.5.1-bin-hadoop3-scala2.13.tgz<span class="w"> </span>https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3-scala2.13.tgz
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>tar<span class="w"> </span>-xf<span class="w"> </span>~/apps/spark/spark-3.5.1-bin-hadoop3-scala2.13.tgz<span class="w"> </span>-C<span class="w"> </span>~/apps/spark
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>rm<span class="w"> </span>~/apps/spark/spark-3.5.1-bin-hadoop3-scala2.13.tgz
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;\nexport PATH=&quot;~/apps/spark/spark-3.5.1-bin-hadoop3-scala2.13/bin:$PATH&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">source</span><span class="w"> </span>~/.bashrc
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>spark-submit<span class="w"> </span>--version
+</span></code></pre></div>
+<p>Then you can install the Spark service account bound to <code>namespace-admin</code> role. This part assumes the isolated namespace is properly set up.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="s1">---</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="s1">apiVersion: v1</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="s1">kind: ServiceAccount</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="s1">metadata:</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="s1">  name: spark</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="s1">---</span>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="s1">apiVersion: rbac.authorization.k8s.io/v1</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="s1">kind: RoleBinding</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="s1">metadata:</span>
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="s1">  name: spark</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="s1">subjects:</span>
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="s1">  - kind: ServiceAccount</span>
+</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="s1">    name: spark</span>
+</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="s1">roleRef:</span>
+</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="s1">  kind: Role</span>
+</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="s1">  name: namespace-admin</span>
+</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="s1">  apiGroup: rbac.authorization.k8s.io</span>
+</span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="s1">&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-
+</span></code></pre></div>
+<p>You can list service accounts to check if Spark's is correctly installed or not.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>sa
+</span></code></pre></div>
+<p>You can delete the service account with the following command.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>rolebinding<span class="w"> </span>spark
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>sa<span class="w"> </span>spark
+</span></code></pre></div>
+<p>Let's go to the next part! Submitting a Spark job! 😃</p>
+<h3 id="submitting-a-spark-job">Submitting a Spark job</h3>
+<p>The goal is to use the provided Spark application with the installation: <a href="https://github.com/apache/spark/blob/master/examples/src/main/scala/org/apache/spark/examples/SparkPi.scala">"SparkPi"</a>. By default, when building your own Spark application, you should build a custom Docker image following the <a href="https://spark.apache.org/docs/latest/running-on-kubernetes.html#docker-images">official guide</a>. It is also possible to use the <a href="https://hub.docker.com/layers/library/spark/3.5.1-scala2.12-java17-ubuntu/images/sha256-682c0707d195b3a8fbc0a888ea91aaea9e4befc8de566aa4625445a430ab55a2?context=explore">Spark official Docker image on DockerHub</a> as a base to inject your custom Spark application JAR. In our case, the Spark official Docker image already includes the "SparkPi" application at '/opt/spark/examples/jars/spark-examples_2.12-3.5.1.jar', so we are going to use that directly.</p>
+<p>This part is going to be short because all the prerequisites are already done. It's now just a matter of launching the following command 😎.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>spark-submit<span class="w"> </span>--master<span class="w"> </span>k8s://https://kubernetes.docker.internal:6443<span class="w"> </span>--deploy-mode<span class="w"> </span>cluster<span class="w"> </span>--name<span class="w"> </span>spark-app<span class="w"> </span>--class<span class="w"> </span>org.apache.spark.examples.SparkPi<span class="w"> </span>--conf<span class="w"> </span>spark.kubernetes.driver.request.cores<span class="o">=</span>50m<span class="w"> </span>--conf<span class="w"> </span>spark.kubernetes.executor.request.cores<span class="o">=</span>200m<span class="w"> </span>--conf<span class="w"> </span>spark.driver.memory<span class="o">=</span>512m<span class="w"> </span>--conf<span class="w"> </span>spark.executor.memory<span class="o">=</span>512m<span class="w"> </span>--conf<span class="w"> </span>spark.executor.instances<span class="o">=</span><span class="m">1</span><span class="w"> </span>--conf<span class="w"> </span>spark.kubernetes.container.image<span class="o">=</span>spark:3.5.1-scala2.12-java17-ubuntu<span class="w"> </span>--conf<span class="w"> </span>spark.kubernetes.namespace<span class="o">=</span>compordept-project-env<span class="w"> </span>--conf<span class="w"> </span>spark.kubernetes.authenticate.driver.serviceAccountName<span class="o">=</span>spark<span class="w"> </span>local:///opt/spark/examples/jars/spark-examples_2.12-3.5.1.jar<span class="w"> </span><span class="m">1</span>
+</span></code></pre></div>
+<p>You can open a second terminal to watch the Spark pods in action héhé 🤩.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>po<span class="w"> </span>-w
+</span></code></pre></div>
+<p>If you take a look at the driver pod logs, you should see the Pi estimate.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>spark-app-4ac4bd9034099a45-driver
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Pi<span class="w"> </span>is<span class="w"> </span>roughly<span class="w"> </span><span class="m">3</span>.139351393513935
+</span></code></pre></div>
+<p>The command to kill Spark driver pods if necessary.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>spark-submit<span class="w"> </span>--kill<span class="w"> </span>compordept-project-env:spark-app*<span class="w"> </span>--master<span class="w"> </span>k8s://https://kubernetes.docker.internal:6443
+</span></code></pre></div>
+<p>Congratulations! You are now capable of running <strong>Spark on K8s and all without K8s cluster-level access, just namespace-level access</strong> is enough 👍! It also means it's extremely easy to uninstall the project from the K8s cluster, just a matter of <code>kubectl delete ns compordept-project-env</code> 😉. But, it requires installing Spark on the machine executing the command as you can see.</p>
+<h2 id="spark-on-k8s-via-kubeflow">🔧 Spark on K8s via Kubeflow</h2>
+<p>First, let's clean up some leftovers from the previous part.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>spark-submit<span class="w"> </span>--kill<span class="w"> </span>compordept-project-env:spark-app*<span class="w"> </span>--master<span class="w"> </span>k8s://https://kubernetes.docker.internal:6443
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>rolebinding<span class="w"> </span>spark
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>sa<span class="w"> </span>spark
+</span></code></pre></div>
+<p>In this part, we are going to show that the <strong>Kubeflow Spark operator is not compatible with our previously set-up isolated namespace</strong>. Then, we will revert to cluster-level access, install the Kubeflow Spark operator, and launch the same 'SparkPi' application.</p>
+<figure>
+  <a class="glightbox" href="../../../../3/image-4.png" data-type="image" data-width="auto" data-height="auto" data-desc-position="bottom"><img alt="Spark on K8s via Kubeflow" src="../../../../3/image-4.png" /></a>
+  <figcaption>Spark on K8s via Kubeflow</figcaption>
+</figure>
+<p>Let's go!</p>
+<h3 id="installation_2">Installation</h3>
+<p>Here are the steps to install Kubeflow Spark operator:</p>
+<ul>
+<li>⬇️🛠️ Install <a href="https://helm.sh/docs/intro/install/">Helm</a>: Kubeflow Spark operator is available via a Helm chart, which is why the Helm CLI is necessary.</li>
+<li>🔑🌐 Ensure you have <strong>necessary Kubernetes cluster-level access</strong>: Kubeflow Spark operator installs CRDs and ClusterRoles, which require cluster-level access.</li>
+<li>🔧🌐 Add the <a href="https://github.com/kubeflow/spark-operator/blob/master/charts/spark-operator-chart/README.md">Kubeflow Spark operator repository</a> locally and install it on the Kubernetes cluster</li>
+</ul>
+<p>Let's make Kubeflow Spark operator work!</p>
+<p>Here is the command to install Helm.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>-o<span class="w"> </span>get_helm.sh<span class="w"> </span>https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>chmod<span class="w"> </span><span class="m">700</span><span class="w"> </span>get_helm.sh
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>./get_helm.sh
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>rm<span class="w"> </span>./get_helm.sh
+</span></code></pre></div>
+<p>You can confirm the installation with the following command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>helm<span class="w"> </span>version
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>version.BuildInfo<span class="o">{</span>Version:<span class="s2">&quot;v3.15.1&quot;</span>,<span class="w"> </span>GitCommit:<span class="s2">&quot;e211f2aa62992bd72586b395de50979e31231829&quot;</span>,<span class="w"> </span>GitTreeState:<span class="s2">&quot;clean&quot;</span>,<span class="w"> </span>GoVersion:<span class="s2">&quot;go1.22.3&quot;</span><span class="o">}</span>
+</span></code></pre></div>
+<p>If it worked, Helm is perfectly installed 😁!</p>
+<p>Next, we have the necessary Kubernetes cluster-level access, but let's skip this part for now. Remember, we are currently set with namespace-level access using the <code>namespace-admin</code> role. So, let's try installing the Kubeflow Spark operator without cluster-level access.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>spark-operator<span class="w"> </span>https://kubeflow.github.io/spark-operator
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>helm<span class="w"> </span>install<span class="w"> </span>devops-spark-operator<span class="w"> </span>spark-operator/spark-operator<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.4.0<span class="w"> </span>-n<span class="w"> </span>compordept-project-env
+</span></code></pre></div>
+<p>You should receive the following 'Forbidden' access error.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Error:<span class="w"> </span>INSTALLATION<span class="w"> </span>FAILED:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>install<span class="w"> </span>CRD<span class="w"> </span>crds/sparkoperator.k8s.io_scheduledsparkapplications.yaml:<span class="w"> </span><span class="m">1</span><span class="w"> </span>error<span class="w"> </span>occurred:
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">        </span>*<span class="w"> </span>customresourcedefinitions.apiextensions.k8s.io<span class="w"> </span>is<span class="w"> </span>forbidden:<span class="w"> </span>User<span class="w"> </span><span class="s2">&quot;namespace-admin&quot;</span><span class="w"> </span>cannot<span class="w"> </span>create<span class="w"> </span>resource<span class="w"> </span><span class="s2">&quot;customresourcedefinitions&quot;</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>API<span class="w"> </span>group<span class="w"> </span><span class="s2">&quot;apiextensions.k8s.io&quot;</span><span class="w"> </span>at<span class="w"> </span>the<span class="w"> </span>cluster<span class="w"> </span>scope
+</span></code></pre></div>
+<p>As you can see, it's <strong>not possible to use Spark via Kubeflow Spark Operator without Kubernetes cluster-level access!</strong> Let's switch back to our Kubernetes admin user.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kubectl<span class="w"> </span>config<span class="w"> </span>set-context<span class="w"> </span>docker-desktop<span class="w"> </span>--user<span class="o">=</span>docker-desktop<span class="w"> </span><span class="c1"># Set back to the K8s admin user</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kubectl<span class="w"> </span>config<span class="w"> </span>delete-user<span class="w"> </span>compordept-project-env-admin
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>rolebinding<span class="w"> </span>namespace-admin
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>role<span class="w"> </span>namespace-admin
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>csr<span class="w"> </span>compordept-project-env-admin
+</span></code></pre></div>
+<p>Now let's try again.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>helm<span class="w"> </span>install<span class="w"> </span>devops-spark-operator<span class="w"> </span>spark-operator/spark-operator<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.4.0<span class="w"> </span>-n<span class="w"> </span>compordept-project-env
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>NAME:<span class="w"> </span>devops-spark-operator
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>LAST<span class="w"> </span>DEPLOYED:<span class="w"> </span>Fri<span class="w"> </span>Jun<span class="w"> </span><span class="m">21</span><span class="w"> </span><span class="m">07</span>:48:49<span class="w"> </span><span class="m">2024</span>
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>NAMESPACE:<span class="w"> </span>compordept-project-env
+</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>STATUS:<span class="w"> </span>deployed
+</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>REVISION:<span class="w"> </span><span class="m">1</span>
+</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>TEST<span class="w"> </span>SUITE:<span class="w"> </span>None
+</span></code></pre></div>
+<p>Ok, it seems it has worked now. But if you look at the pods, the Kubeflow Spark operator pod is missing.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>po
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>No<span class="w"> </span>resources<span class="w"> </span>found<span class="w"> </span><span class="k">in</span><span class="w"> </span>compordept-project-env<span class="w"> </span>namespace.
+</span></code></pre></div>
+<p>This is due to the <code>ResourceQuota</code> in place, which requires requests and limits to be set up on all pods in order to orchestrate them. I did not find a way to configure them during Helm chart installation. So let's just remove the quota:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>quota<span class="w"> </span>namespace-quota
+</span></code></pre></div>
+<p>Then, try to reinstall the chart.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>helm<span class="w"> </span>uninstall<span class="w"> </span>devops-spark-operator<span class="w"> </span>-n<span class="w"> </span>compordept-project-env
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>helm<span class="w"> </span>install<span class="w"> </span>devops-spark-operator<span class="w"> </span>spark-operator/spark-operator<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.4.0<span class="w"> </span>-n<span class="w"> </span>compordept-project-env
+</span></code></pre></div>
+<p>Then, list the pods.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>po
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>NAME<span class="w">                                     </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>devops-spark-operator-76968c6d75-nn4l7<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>84s
+</span></code></pre></div>
+<p>Wow, this time it actually worked 👍! Installation complete!</p>
+<p>Here are some commands if you would like to delete the created resources.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>helm<span class="w"> </span>uninstall<span class="w"> </span>devops-spark-operator<span class="w"> </span>-n<span class="w"> </span>compordept-project-env
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>crds<span class="w"> </span>scheduledsparkapplications.sparkoperator.k8s.io<span class="w"> </span>sparkapplications.sparkoperator.k8s.io
+</span></code></pre></div>
+<p>Let's proceed to submitting Spark applications now.</p>
+<h3 id="submitting-a-spark-job_1">Submitting a Spark job</h3>
+<p>To launch a Spark job, here are the steps:</p>
+<ul>
+<li>📄⚙️ <strong>Define a K8s manifest YAML file</strong> using the resource <code>SparkApplication</code>. This resource is not native to K8s; it comes from the Kubeflow Spark Operator CRDs.</li>
+<li>📄🚀 Then, just <strong>apply the K8s file</strong>.</li>
+</ul>
+<p>Let's use the official Spark Docker image that comes with the "SparkPi" application, like when we were running Spark via CLI.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span>
+</span><span id="__span-36-2"><a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="s2">apiVersion: &quot;</span>sparkoperator.k8s.io/v1beta2<span class="s2">&quot;</span>
+</span><span id="__span-36-3"><a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="s2">kind: SparkApplication</span>
+</span><span id="__span-36-4"><a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="s2">metadata:</span>
+</span><span id="__span-36-5"><a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="s2">  name: spark-app</span>
+</span><span id="__span-36-6"><a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="s2">spec:</span>
+</span><span id="__span-36-7"><a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="s2">  type: Scala</span>
+</span><span id="__span-36-8"><a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="s2">  mode: cluster</span>
+</span><span id="__span-36-9"><a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a><span class="s2">  image: &quot;</span>spark:3.5.1<span class="s2">&quot;</span>
+</span><span id="__span-36-10"><a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a><span class="s2">  imagePullPolicy: Always</span>
+</span><span id="__span-36-11"><a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a><span class="s2">  mainClass: org.apache.spark.examples.SparkPi</span>
+</span><span id="__span-36-12"><a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a><span class="s2">  mainApplicationFile: &quot;</span>local:///opt/spark/examples/jars/spark-examples_2.12-3.5.1.jar<span class="s2">&quot;</span>
+</span><span id="__span-36-13"><a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="s2">  sparkVersion: &quot;</span><span class="m">3</span>.5.1<span class="s2">&quot;</span>
+</span><span id="__span-36-14"><a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a><span class="s2">  restartPolicy:</span>
+</span><span id="__span-36-15"><a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a><span class="s2">    type: Never</span>
+</span><span id="__span-36-16"><a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span class="s2">  driver:</span>
+</span><span id="__span-36-17"><a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a><span class="s2">    cores: 1</span>
+</span><span id="__span-36-18"><a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a><span class="s2">    memory: &quot;</span>512m<span class="s2">&quot;</span>
+</span><span id="__span-36-19"><a id="__codelineno-36-19" name="__codelineno-36-19" href="#__codelineno-36-19"></a><span class="s2">    labels:</span>
+</span><span id="__span-36-20"><a id="__codelineno-36-20" name="__codelineno-36-20" href="#__codelineno-36-20"></a><span class="s2">      version: 3.5.1</span>
+</span><span id="__span-36-21"><a id="__codelineno-36-21" name="__codelineno-36-21" href="#__codelineno-36-21"></a><span class="s2">    serviceAccount: devops-spark-operator-spark</span>
+</span><span id="__span-36-22"><a id="__codelineno-36-22" name="__codelineno-36-22" href="#__codelineno-36-22"></a><span class="s2">  executor:</span>
+</span><span id="__span-36-23"><a id="__codelineno-36-23" name="__codelineno-36-23" href="#__codelineno-36-23"></a><span class="s2">    cores: 1</span>
+</span><span id="__span-36-24"><a id="__codelineno-36-24" name="__codelineno-36-24" href="#__codelineno-36-24"></a><span class="s2">    instances: 1</span>
+</span><span id="__span-36-25"><a id="__codelineno-36-25" name="__codelineno-36-25" href="#__codelineno-36-25"></a><span class="s2">    memory: &quot;</span>512m<span class="s2">&quot;</span>
+</span><span id="__span-36-26"><a id="__codelineno-36-26" name="__codelineno-36-26" href="#__codelineno-36-26"></a><span class="s2">    labels:</span>
+</span><span id="__span-36-27"><a id="__codelineno-36-27" name="__codelineno-36-27" href="#__codelineno-36-27"></a><span class="s2">      version: 3.5.1</span>
+</span><span id="__span-36-28"><a id="__codelineno-36-28" name="__codelineno-36-28" href="#__codelineno-36-28"></a><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-
+</span></code></pre></div>
+<p>If you pay attention, in terms of driver and executor core requests, it's not exactly the same as the previous Spark submit via Spark CLI. Previously, '50m' and '200m' were set. This is because the <code>SparkApplication</code> resource does not support millicore units.</p>
+<p>The <code>SparkApplication</code> resource, like any other K8s resource, can be listed.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>sparkapp
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>NAME<span class="w">        </span>STATUS<span class="w">      </span>ATTEMPTS<span class="w">   </span>START<span class="w">                  </span>FINISH<span class="w">       </span>AGE
+</span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>spark-app<span class="w">   </span>SUBMITTED<span class="w">   </span><span class="m">1</span><span class="w">          </span><span class="m">2024</span>-06-22T07:27:38Z<span class="w">   </span>&lt;no<span class="w"> </span>value&gt;<span class="w">   </span>8s
+</span></code></pre></div>
+<p>If you list the pods, you will see your Spark application running!</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>pod
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>NAME<span class="w">                                     </span>READY<span class="w">   </span>STATUS<span class="w">              </span>RESTARTS<span class="w">      </span>AGE
+</span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>devops-spark-operator-76968c6d75-nn4l7<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">             </span><span class="m">2</span><span class="w"> </span><span class="o">(</span>57m<span class="w"> </span>ago<span class="o">)</span><span class="w">   </span>25h
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>spark-app-driver<span class="w">                         </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">             </span><span class="m">0</span><span class="w">             </span>35s
+</span><span id="__span-40-4"><a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>spark-pi-5672d5903ed86ce8-exec-1<span class="w">         </span><span class="m">0</span>/1<span class="w">     </span>ContainerCreating<span class="w">   </span><span class="m">0</span><span class="w">             </span>1s
+</span></code></pre></div>
+<p>And you can get your estimated Pi just like for the Spark via CLI.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>spark-app-driver
+</span></code></pre></div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>Pi<span class="w"> </span>is<span class="w"> </span>roughly<span class="w"> </span><span class="m">3</span>.1459357296786483
+</span></code></pre></div>
+<p>The following command deletes <code>SparkApplication</code> resources and their related pods.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>sparkapp<span class="w"> </span>spark-app
+</span></code></pre></div>
+<p>Congratulations! You know how to launch a Spark job using the Kubeflow Spark operator! The advantage of using the Kubeflow Spark operator instead of the default Spark via CLI is not needing to set up Spark locally or install Java and Spark. Plus, the Kubeflow Spark operator offers other features like cron scheduling and the <code>sparkctl</code> command-line tool.</p>
+<h2 id="conclusion">🔚 Conclusion</h2>
+<p>I think you don't need the Kubeflow Spark operator. The basic Spark via CLI for running jobs on Kubernetes is best, even if you have cluster-level access to install the Kubeflow Spark operator. This way, it enforces data engineers to work with tight namespace-level access on K8s, which is often the case in the industry.</p>
+<p>I write monthly on the <a href="https://lovindata.github.io/blog/">LovinData Blog</a> and on <a href="https://medium.com/@jamesjg">Medium</a>, and like to give back the knowledge I've learned. So don't hesitate to reach out; I'm always available to chat about nerdy stuff 🤗! Here are my socials: <a href="https://www.linkedin.com/in/james-jiang-87306b155/">LinkedIn</a>, <a href="https://twitter.com/jamesjg_">Twitter</a> and <a href="https://www.reddit.com/user/lovindata/">Reddit</a>. Otherwise, let's learn together in the next story 🫡! Bye ❤️.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+  
+
+
+
+      
+    </article>
+  </div>
+
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; <script>document.write(new Date().getFullYear())</script> James Jiang
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/lovindata" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/user/jamesjg/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 404c11.1 0 20.1 9.1 20.1 20.3 0 11.3-9 20.4-20.1 20.4-11 0-20.1-9.2-20.1-20.4.1-11.3 9.1-20.3 20.1-20.3M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.7-142.6c-11.1 0-20.1-9.1-20.1-20.3.1-11.3 9-20.4 20.1-20.4 11 0 20.1 9.2 20.1 20.4s-9 20.3-20.1 20.3"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://hub.docker.com/repositories/lovindata" target="_blank" rel="noopener" title="hub.docker.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M349.9 236.3h-66.1v-59.4h66.1zm0-204.3h-66.1v60.7h66.1zm78.2 144.8H362v59.4h66.1zm-156.3-72.1h-66.1v60.1h66.1zm78.1 0h-66.1v60.1h66.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1zm78.1 0h-66.1v59.4h66.1zm-78.1-72.1h-66.1v60.1h66.1z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/jamesjg_" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/in/james-jiang-87306b155/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5m282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.reddit.com/user/lovindata/" target="_blank" rel="noopener" title="www.reddit.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M0 256C0 114.6 114.6 0 256 0s256 114.6 256 256-114.6 256-256 256H37.1c-13.7 0-20.5-16.5-10.9-26.2L75 437C28.7 390.7 0 326.7 0 256m349.6-102.4c23.6 0 42.7-19.1 42.7-42.7s-19.1-42.7-42.7-42.7c-20.6 0-37.8 14.6-41.8 34-34.5 3.7-61.4 33-61.4 68.4v.2c-37.5 1.6-71.8 12.3-99 29.1-10.1-7.8-22.8-12.5-36.5-12.5-33 0-59.8 26.8-59.8 59.8 0 24 14.1 44.6 34.4 54.1 2 69.4 77.6 125.2 170.6 125.2s168.7-55.9 170.6-125.3c20.2-9.6 34.1-30.2 34.1-54 0-33-26.8-59.8-59.8-59.8-13.7 0-26.3 4.6-36.4 12.4-27.4-17-62.1-27.7-100-29.1v-.2c0-25.4 18.9-46.5 43.4-49.9 4.4 18.8 21.3 32.8 41.5 32.8zm-172.5 93.3c16.7 0 29.5 17.6 28.5 39.3s-13.5 29.6-30.3 29.6-31.4-8.8-30.4-30.5S160.3 247 177 247zm190.1 38.3c1 21.7-13.7 30.5-30.4 30.5s-29.3-7.9-30.3-29.6 11.8-39.3 28.5-39.3 31.2 16.6 32.1 38.3zm-48.1 56.7c-10.3 24.6-34.6 41.9-63 41.9s-52.7-17.3-63-41.9c-1.2-2.9.8-6.2 3.9-6.5 18.4-1.9 38.3-2.9 59.1-2.9s40.7 1 59.1 2.9c3.1.3 5.1 3.6 3.9 6.5"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://medium.com/@jamesjg" target="_blank" rel="noopener" title="medium.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M180.5 74.262C80.813 74.262 0 155.633 0 256s80.819 181.738 180.5 181.738S361 356.373 361 256 280.191 74.262 180.5 74.262m288.25 10.646c-49.845 0-90.245 76.619-90.245 171.095s40.406 171.1 90.251 171.1 90.251-76.619 90.251-171.1H559c0-94.503-40.4-171.095-90.248-171.095Zm139.506 17.821c-17.526 0-31.735 68.628-31.735 153.274s14.2 153.274 31.735 153.274S640 340.631 640 256c0-84.649-14.215-153.271-31.742-153.271Z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tracking", "navigation.tabs", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  <script>document$.subscribe(() => {const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});})</script></body>
+</html>
