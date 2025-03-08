@@ -5,7 +5,7 @@ categories:
   - Linux
   - Docker
   - Traefik
-  - Crowdsec
+  - CrowdSec
   - DevOps
 ---
 
@@ -641,16 +641,25 @@ Let's start by running the LLM container stack on our server. Here are the steps
 
 ```yaml
 services:
-  # https://github.com/open-webui/open-webui
   openwebui:
-    image: ghcr.io/open-webui/open-webui:v0.5.4
-    restart: unless-stopped
-    ports:
-      - ${OPENWEBUI_PORT}:8080
+    # https://github.com/open-webui/open-webui
+    image: ghcr.io/open-webui/open-webui:v0.5.17
     environment:
-      OLLAMA_API_BASE_URL: http://ollama:${OLLAMA_PORT}
+      OLLAMA_BASE_URL: http://ollama:11434
     volumes:
       - openwebui_app_backend_data:/app/backend/data
+    networks:
+      - default
+      - docker_default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.tls=${TLS}
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.tls.certresolver=letsencrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.entryPoints=http,https
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.rule=Host(`${OPENWEBUI_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.service=${COMPOSE_PROJECT_NAME}-openwebui
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-openwebui.loadbalancer.server.port=8080
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-openwebui.middlewares=crowdsec-bouncer-traefik-plugin@file
     healthcheck:
       test: "curl -f http://localhost:8080"
       interval: 10s
@@ -659,29 +668,38 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-
-  # https://hub.docker.com/r/ollama/ollama/tags
-  ollama:
-    image: ollama/ollama:0.5.4
     restart: unless-stopped
-    ports:
-      - ${OLLAMA_PORT}:11434
+
+  ollama:
+    # https://hub.docker.com/r/ollama/ollama/tags
+    image: ollama/ollama:0.5.12
     volumes:
       - ollama_root_ollama:/root/.ollama
+    networks:
+      - default
     healthcheck:
       test: "ollama --version && ollama ps || exit 1" # https://github.com/ollama/ollama/issues/1378#issuecomment-2436650823
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   openwebui_app_backend_data:
-    driver: local
   ollama_root_ollama:
-    driver: local
+
+networks:
+  default:
+  docker_default:
+    external: true
 ```
 
-- In the `Environment variables` section, add the following environment variables: `OPENWEBUI_PORT -> 11435` and `OLLAMA_PORT -> 11434`.
+- In the `Environment variables` section, add the following environment variables:
+
+| Environment variable |         Value          |
+| :------------------: | :--------------------: |
+|       **TLS**        |          true          |
+|  **OPENWEBUI_HOST**  | llm.mydomain.topdomain |
 
 You should end up with a configuration that looks like this:
 
@@ -690,7 +708,7 @@ You should end up with a configuration that looks like this:
   <figcaption>Configuring the Open WebUI and Ollama stack</figcaption>
 </figure>
 
-Let's now expose our application to the outside world. To be precise, it means exposing the Open WebUI service. This part is identical to when Nginx Proxy Manager and Portainer were exposed, so I invite you to **check the previous part**. The important part is to **expose only the Open WebUI and enable `Websockets Support`** because text writing on the fly is done through a websocket. After that, you should be able to **navigate to 'llm.mydomain.topdomain'**, and by **configuring your admin account (mandatory on first page load)**, you should end up on the following page:
+Make sure your DNS provider has `llm.mydomain.topdomain` routed to your ISP router, just like Portainer and Traefik were set up in the previous section. After that, you should be able to **navigate to 'llm.mydomain.topdomain'**, and by **configuring your admin account (mandatory on first page load)**, you should end up on the following page:
 
 <figure markdown="span">
   ![Open WebUI](image-28.png)
