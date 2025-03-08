@@ -194,7 +194,7 @@ Then, congratulations! You've successfully set up a server similar to the ones y
 
 ## 🌐 Prepare DNS and ISP Router settings to forward HTTP/HTTPS requests
 
-In this section, we are going to expose Nginx Proxy Manager and Portainer to the outside world. The goal is to be able to manage, deploy, and maintain our services from anywhere! In this part, depending on your ISP and domain name provider, it's highly likely that you do not have exactly the same screens.
+In this section, we will prepare our DNS provider and ISP router to expose our services to the outside world. Depending on your ISP and domain name provider, it is highly likely that you will not have the exact same screens.
 
 <figure markdown="span">
   ![Prepare DNS and ISP Router settings to forward HTTP/HTTPS requests](image-20.png)
@@ -326,8 +326,9 @@ Docker Compose version v2.32.1
 
 Then install the Portainer, Traefik, and CrowdSec stack:
 
-```sh
-cat <<EOF
+- The Docker Compose stack
+
+```yaml title='docker-compose.yml'
 services:
   traefik:
     build:
@@ -509,7 +510,12 @@ volumes:
 
 networks:
   default:
-EOF | sudo TRAEFIK_TLS=true TRAEFIK_TLS_CASERVER='https://acme-v02.api.letsencrypt.org/directory' TRAEFIK_HOST='traefik.mydomain.topdomain' TRAEFIK_USER='myuser' TRAEFIK_PASSWORD_HASHED='myhashedpassword' TRAEFIK_ACCESSLOG_LOGROTATE_SIZE='200M' TRAEFIK_ACCESSLOG_LOGROTATE_ROTATE='14' TRAEFIK_ACCESSLOG_LOGROTATE_MAXAGE='30' TRAEFIK_ACCESSLOG_LOGROTATE_CRON_EXPRESSION='0 0,12 * * *' CROWDSEC_BOUNCER_KEY_TRAEFIK=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c50) PORTAINER_HOST='portainer.mydomain.topdomain' docker compose -p docker -f - up -d --remove-orphans --build && sudo docker image prune -f
+```
+
+- The command-line interface (CLI) command to run
+
+```sh
+sudo COMPOSE_PROJECT_NAME='docker' TRAEFIK_TLS=true TRAEFIK_TLS_CASERVER='https://acme-v02.api.letsencrypt.org/directory' TRAEFIK_HOST='traefik.mydomain.topdomain' TRAEFIK_USER='myuser' TRAEFIK_PASSWORD_HASHED='myhashedpassword' TRAEFIK_ACCESSLOG_LOGROTATE_SIZE='200M' TRAEFIK_ACCESSLOG_LOGROTATE_ROTATE='14' TRAEFIK_ACCESSLOG_LOGROTATE_MAXAGE='30' TRAEFIK_ACCESSLOG_LOGROTATE_CRON_EXPRESSION='0 0,12 * * *' CROWDSEC_BOUNCER_KEY_TRAEFIK=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c50) PORTAINER_HOST='portainer.mydomain.topdomain' docker compose -p docker -f docker-compose.yml up -d --remove-orphans --build && sudo docker image prune -f
 ```
 
 Once completed, you can **navigate to https://portainer.mydomain.topdomain**. You should be prompted to **create the administrator account**. Once completed and logged in, the following screen should be presented to you:
@@ -628,7 +634,7 @@ Congratulations! You've successfully installed CrowdSec! 🤗 It also shows how 
 This section aims to demonstrate how to properly install a stack of containers for a given application and expose it to the Internet. [LLMs](https://en.wikipedia.org/wiki/Large_language_model) are hot topics nowadays, so let's use the [Open WebUI](https://openwebui.com/) and [Ollama](https://ollama.com/) stack as an example.
 
 <figure markdown="span">
-  ![Open WebUI and Ollama Setup](image-26.png)
+  ![Open WebUI and Ollama Setup](image-24.png)
   <figcaption>Open WebUI and Ollama Setup</figcaption>
 </figure>
 
@@ -704,33 +710,33 @@ networks:
 You should end up with a configuration that looks like this:
 
 <figure markdown="span">
-  ![Configuring the Open WebUI and Ollama stack](image-27.png)
+  ![Configuring the Open WebUI and Ollama stack](image-25.png)
   <figcaption>Configuring the Open WebUI and Ollama stack</figcaption>
 </figure>
 
 Make sure your DNS provider has `llm.mydomain.topdomain` routed to your ISP router, just like Portainer and Traefik were set up in the previous section. After that, you should be able to **navigate to 'llm.mydomain.topdomain'**, and by **configuring your admin account (mandatory on first page load)**, you should end up on the following page:
 
 <figure markdown="span">
-  ![Open WebUI](image-28.png)
+  ![Open WebUI](image-26.png)
   <figcaption>Open WebUI</figcaption>
 </figure>
 
 Let's now download the latest [Phi-4](https://ollama.com/library/phi4) with its 14 billion parameters, rumored to rival [OpenAI's GPT-4o mini](https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/), which everyone is talking about. You can also try other LLMs instead; models are available in the [Ollama Models section](https://ollama.com/search).
 
 <figure markdown="span">
-  ![The Phi-4 model](image-29.png)
+  ![The Phi-4 model](image-27.png)
   <figcaption>The Phi-4 model</figcaption>
 </figure>
 
 <figure markdown="span">
-  ![Downloading the Phi-4 model](image-30.png)
+  ![Downloading the Phi-4 model](image-28.png)
   <figcaption>Downloading the Phi-4 model</figcaption>
 </figure>
 
 Here is an example result of prompting:
 
 <figure markdown="span">
-  ![An example of a prompt result](image-31.png)
+  ![An example of a prompt result](image-29.png)
   <figcaption>An example of a prompt result</figcaption>
 </figure>
 
