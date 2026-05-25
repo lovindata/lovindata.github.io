@@ -22,35 +22,21 @@ jobs:
 
       # Setup python
       - name: Set up python
-        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          
-      # Setup poetry
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
 
-      # Load cached venv
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
+      # Setup uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          
-      # Load cached dependencies or install
+          enable-cache: true
+
+      # Install dependencies
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      - name: Install project
-        run: poetry install --no-interaction
-        
-      # Setup cache & Deploy using the venv
+        run: uv sync --all-groups
+
+      # Setup cache & Deploy
       - name: Prepare cache setup
         run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
       - name: Setup cache to improve workflow execution time
@@ -61,6 +47,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - name: Deploy
-        run: |
-          source .venv/bin/activate
-          mkdocs gh-deploy --force
+        run: uv run mkdocs gh-deploy --force
