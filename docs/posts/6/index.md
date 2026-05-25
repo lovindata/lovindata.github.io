@@ -1,5 +1,5 @@
 ---
-title: "Payment Events at Scale: Building a Robust Kafka Event Bus 🚌 for a B2B Payment Platform"
+title: "Payment Events at Scale: Building a Robust Kafka Event Bus 🚌"
 date: 2026-05-20
 categories:
   - Kafka
@@ -16,9 +16,9 @@ When I joined the company, I was tasked with building a [payment system](https:/
 
 ![Kafka event bus for payment systems](image.png)
 
-## 💳 The Business Case: What Happens After the Card Is Swiped
-
 For this article, the complete code is available on GitHub 🫡 [here](https://github.com/lovindata/blog/tree/main/assets/posts/6).
+
+## 💳 The Business Case: What Happens After the Card Is Swiped
 
 <figure markdown="span">
   ![Payment flow: from card swipe to webhook](image-1.png)
