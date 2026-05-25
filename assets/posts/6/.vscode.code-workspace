@@ -1,0 +1,46 @@
+{
+  "folders": [
+    {
+      "path": "docs",
+    },
+    {
+      "path": "backend_core",
+    },
+    {
+      "path": "backend_analytics",
+    },
+    {
+      "path": "devops",
+    },
+    {
+      "path": ".",
+    },
+    {
+      "path": "../../..",
+    },
+  ],
+  "settings": {
+    // General
+    "editor.formatOnSave": true,
+    "editor.wordWrap": "on",
+    "claudeCode.useTerminal": true,
+
+    // Git
+    "git.autofetch": "all",
+    "git.autofetchPeriod": 60,
+    "git.pruneOnFetch": true,
+
+    // Json
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+
+    // Markdown
+    "[markdown]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+  },
+}

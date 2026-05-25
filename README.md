@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  LovinData - Simplified Full Stack Data Engineering
+  LovinData - Simplified Software Engineering
 </p>
 
 <p align="center">
@@ -22,41 +22,52 @@ Please install [VSCode](https://code.visualstudio.com/) and its extensions:
 - Even Better TOML
 - Prettier
 
-Please install [Python](https://www.python.org/downloads/), [pip](https://pip.pypa.io/en/stable/installation/) and [venv](https://docs.python.org/3/library/venv.html).
+Please install [git](https://git-scm.com/download/linux):
 
-```bash
+```sh
+sudo apt install git
+```
+
+Please install or update [Python](https://www.python.org/downloads/):
+
+```sh
 sudo apt install python3 python3-pip python3-venv
 ```
 
-Please install [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer) with the official installer.
+Please install or update [uv](https://docs.astral.sh/uv/getting-started/installation/):
 
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-echo -e '\nexport PATH="/home/lovindata/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-poetry config virtualenvs.in-project true
+```sh
+curl -LsSf https://astral.sh/uv/0.9.22/install.sh | sh \
+&& uv --version
 ```
 
-To create your Python environment and install dependencies:
+Please create your Python environment and install dependencies:
 
-```bash
-poetry install
+```sh
+uv venv --clear \
+&& uv sync --all-groups
 ```
 
-To update dependencies:
+Please reload the VSCode window:
 
-```bash
-poetry update
+- In VSCode, press `CTRL + SHIFT + P`
+- Click on `Python: Clear Cache and Reload Window`
+
+To update the dependencies:
+
+```sh
+uv lock --upgrade \
+&& uv sync --all-groups
 ```
 
-To clear poetry cache:
+To clear uv cache:
 
-```bash
-poetry cache clear --all --quiet .
+```sh
+uv cache clean
 ```
 
 To serve the blog, run the command:
 
 ```bash
-poetry run mkdocs serve
+uv run mkdocs serve
 ```

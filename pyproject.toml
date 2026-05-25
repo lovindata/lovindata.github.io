@@ -1,13 +1,11 @@
-[tool.poetry]
-package-mode = false
+[project]
+name = "lovindata-github-io"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "mkdocs-material>=9.5.13",
+    "mkdocs-glightbox>=0.3.7",
+]
 
-
-[tool.poetry.dependencies]
-python = "^3.12"
-mkdocs-material = "^9.5.13"
-mkdocs-glightbox = "^0.3.7"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+package = false

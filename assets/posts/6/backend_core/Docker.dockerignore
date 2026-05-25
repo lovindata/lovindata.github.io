@@ -1,0 +1,18 @@
+# Others
+/backend_analytics/
+/devops/
+/docs/
+/.gitignore
+/.vscode.code-workspace
+/README.md
+
+# Backend core
+/backend_core/.venv/
+/backend_core/.vscode/
+/backend_core/draft/
+/backend_core/**/__pycache__/
+/backend_core/.gitignore
+/backend_core/Dockerfile
+/backend_core/Dockerfile.dockerignore
+/backend_core/README.md
+

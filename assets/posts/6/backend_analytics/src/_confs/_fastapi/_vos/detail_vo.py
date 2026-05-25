@@ -1,0 +1,1 @@
+DetailVo = str | None
