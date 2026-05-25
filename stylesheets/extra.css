@@ -1,0 +1,13 @@
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+}
+
+.md-typeset .md-typeset__table {
+  display: block;
+}
+.md-typeset__table table:not([class]) {
+  display: table;
+}
